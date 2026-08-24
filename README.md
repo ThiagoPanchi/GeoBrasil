@@ -20,5 +20,53 @@ GeoBrasil/
 - Backend: Python + FastAPI
 - Banco de dados: PostgreSQL + PostGIS
 - Dados: Censo Demografico e malhas territoriais do IBGE
-- Mapas: Leaflet ou MapLibre GL JS
+- Mapas: MapLibre GL JS
 - Infraestrutura futura: Docker, Redis, Nginx e servicos em nuvem
+
+## MVP inicial
+
+A versao inicial permite:
+
+- visualizar o mapa base do Brasil
+- visualizar uma camada simplificada de estados
+- selecionar uma UF antes de carregar municipios
+- visualizar municipios da UF selecionada
+- clicar em um municipio
+- consultar indicadores censitarios mockados
+- aplicar um indicador ao mapa
+- gerar mapa coropletico por indicador
+- visualizar informacoes em popup e painel lateral
+
+Nesta etapa os dados sao simplificados e mockados no backend. A substituicao por malhas oficiais do IBGE e dados em PostgreSQL/PostGIS ficara para uma etapa posterior.
+
+## Como executar localmente
+
+### Backend
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+API local:
+
+```text
+http://localhost:8000
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Aplicacao local:
+
+```text
+http://localhost:5173
+```
