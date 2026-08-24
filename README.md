@@ -57,6 +57,21 @@ API local:
 http://localhost:8000
 ```
 
+Endpoints iniciais:
+
+- `GET /health`
+- `GET /states`
+- `GET /municipalities`
+- `GET /municipalities?uf=SP`
+- `GET /municipalities/{id}`
+- `GET /indicators`
+- `GET /indicators/{indicator_id}/municipalities`
+- `GET /indicators/{indicator_id}/municipalities?uf=SP`
+
+Endpoint auxiliar usado pelo mapa:
+
+- `GET /states/{uf}/municipalities?indicator=population`
+
 ### Frontend
 
 ```bash

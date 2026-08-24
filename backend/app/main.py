@@ -46,6 +46,27 @@ def municipality(
 def feature_collection(features: list[dict]):
     return {"type": "FeatureCollection", "features": features}
 
+
+def all_municipality_features():
+    return [feature for features in MUNICIPALITIES.values() for feature in features]
+
+
+def municipality_summary(feature: dict):
+    return {
+        "id": feature["properties"]["id"],
+        "name": feature["properties"]["name"],
+        "uf": feature["properties"]["uf"],
+    }
+
+
+def municipality_indicator_summary(feature: dict, indicator_id: str):
+    return {
+        **municipality_summary(feature),
+        "indicator_id": indicator_id,
+        "value": feature["properties"]["indicators"][indicator_id],
+    }
+
+
 COLOR_RAMP = ["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"]
 
 INDICATORS = [
@@ -104,6 +125,32 @@ def states_geojson():
 @app.get("/indicators")
 def list_indicators():
     return INDICATORS
+
+
+@app.get("/municipalities")
+def list_municipalities(uf: str | None = None):
+    if uf:
+        uf = uf.upper()
+        if uf not in MUNICIPALITIES:
+            raise HTTPException(status_code=404, detail="UF nao encontrada")
+        return [municipality_summary(feature) for feature in MUNICIPALITIES[uf]]
+
+    return [municipality_summary(feature) for feature in all_municipality_features()]
+
+
+@app.get("/indicators/{indicator_id}/municipalities")
+def municipalities_by_indicator(indicator_id: str, uf: str | None = None):
+    validate_indicator(indicator_id)
+
+    if uf:
+        uf = uf.upper()
+        if uf not in MUNICIPALITIES:
+            raise HTTPException(status_code=404, detail="UF nao encontrada")
+        features = MUNICIPALITIES[uf]
+    else:
+        features = all_municipality_features()
+
+    return [municipality_indicator_summary(feature, indicator_id) for feature in features]
 
 
 @app.get("/states/{uf}/municipalities")
