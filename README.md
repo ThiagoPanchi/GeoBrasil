@@ -72,6 +72,21 @@ Endpoint auxiliar usado pelo mapa:
 
 - `GET /states/{uf}/municipalities?indicator=population`
 
+### Banco de dados
+
+Scripts iniciais do PostgreSQL/PostGIS:
+
+- `database/001_schema.sql`
+- `database/002_seed_example.sql`
+
+Execucao prevista:
+
+```bash
+createdb geobrasil
+psql -d geobrasil -f database/001_schema.sql
+psql -d geobrasil -f database/002_seed_example.sql
+```
+
 ### Frontend
 
 ```bash
