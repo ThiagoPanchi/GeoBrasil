@@ -18,5 +18,6 @@ Este documento sera usado para organizar as etapas de desenvolvimento e aprendiz
 - Substituir dados mockados por malhas oficiais do IBGE
 - Criar banco PostgreSQL/PostGIS
 - Importar geometrias de estados e municipios
+- Importar setores censitarios com carregamento sob demanda por municipio
 - Modelar tabelas de indicadores censitarios
 - Conectar endpoints do FastAPI ao banco espacial

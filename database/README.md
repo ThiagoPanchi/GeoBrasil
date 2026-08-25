@@ -6,12 +6,14 @@ Scripts iniciais para configurar o PostgreSQL com PostGIS.
 
 - `001_schema.sql`: cria a extensao PostGIS, tabelas, relacionamentos e indices.
 - `002_seed_example.sql`: insere dados simplificados de exemplo para testes locais.
+- `003_census_sectors.sql`: cria a tabela espacial de setores censitarios relacionada aos municipios.
 
 ## Ordem de execucao
 
 ```bash
 psql -d geobrasil -f database/001_schema.sql
 psql -d geobrasil -f database/002_seed_example.sql
+psql -d geobrasil -f database/003_census_sectors.sql
 ```
 
 ## Modelo inicial
@@ -20,5 +22,6 @@ psql -d geobrasil -f database/002_seed_example.sql
 - `municipalities`: municipios relacionados a estados, tambem com geometria `MultiPolygon` em SRID 4674.
 - `census_indicators`: catalogo de indicadores censitarios.
 - `municipality_indicator_values`: valores dos indicadores por municipio.
+- `census_sectors`: setores censitarios relacionados aos municipios.
 
 Os dados de `002_seed_example.sql` sao apenas exemplos. As malhas oficiais e os dados reais do Censo serao importados em etapa posterior.

@@ -31,6 +31,7 @@ A versao inicial permite:
 - visualizar uma camada simplificada de estados
 - selecionar uma UF antes de carregar municipios
 - visualizar municipios da UF selecionada
+- carregar setores censitarios somente apos selecionar um municipio
 - clicar em um municipio
 - consultar indicadores censitarios mockados
 - aplicar um indicador ao mapa
@@ -78,6 +79,7 @@ Scripts iniciais do PostgreSQL/PostGIS:
 
 - `database/001_schema.sql`
 - `database/002_seed_example.sql`
+- `database/003_census_sectors.sql`
 
 Execucao prevista:
 
@@ -85,7 +87,12 @@ Execucao prevista:
 createdb geobrasil
 psql -d geobrasil -f database/001_schema.sql
 psql -d geobrasil -f database/002_seed_example.sql
+psql -d geobrasil -f database/003_census_sectors.sql
 ```
+
+Organizacao dos dados IBGE:
+
+- `docs/ibge-data-organization.md`
 
 ### Frontend
 
