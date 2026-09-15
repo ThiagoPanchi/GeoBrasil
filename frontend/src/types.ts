@@ -9,11 +9,31 @@ export type Indicator = {
   unit: string;
 };
 
-export type MunicipalityDetails = {
+export type TerritorialLayer = 'states' | 'microregions' | 'municipalities' | 'sectors';
+
+export type Microregion = {
+  id: string;
+  name: string;
+  uf: string;
+};
+
+export type Municipality = {
+  id: string;
+  name: string;
+  uf: string;
+};
+
+export type TerritorialDetails = {
   id: string;
   name: string;
   uf: string;
   indicators: Record<string, number>;
+};
+
+export type MunicipalityDetails = TerritorialDetails;
+
+export type CensusSectorDetails = TerritorialDetails & {
+  municipalityId: string;
 };
 
 export type ChoroplethBreak = {
@@ -22,10 +42,29 @@ export type ChoroplethBreak = {
   color: string;
 };
 
-export type MunicipalityFeatureCollection = GeoJSON.FeatureCollection & {
+export type Bbox = [[number, number], [number, number]];
+
+export type TerritorialFeatureCollection = GeoJSON.FeatureCollection & {
   metadata?: {
-    indicator: string;
-    breaks: ChoroplethBreak[];
-    bbox: [[number, number], [number, number]];
+    indicator?: string;
+    breaks?: ChoroplethBreak[];
+    bbox?: Bbox;
   };
+};
+
+export type MunicipalityFeatureCollection = TerritorialFeatureCollection;
+
+export type DashboardRow = {
+  id: string;
+  name: string;
+  uf?: string;
+  municipalityId?: string;
+  indicators: Record<string, number>;
+};
+
+export type IndicatorValueRow = {
+  id: string;
+  name: string;
+  indicator_id: string;
+  value: number | null;
 };

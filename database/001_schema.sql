@@ -8,10 +8,19 @@ CREATE TABLE states (
     geom geometry(MultiPolygon, 4674) NOT NULL
 );
 
+CREATE TABLE microregions (
+    id SERIAL PRIMARY KEY,
+    ibge_code INTEGER NOT NULL UNIQUE,
+    state_id INTEGER NOT NULL REFERENCES states(id) ON DELETE RESTRICT,
+    name VARCHAR(150) NOT NULL,
+    geom geometry(MultiPolygon, 4674) NOT NULL
+);
+
 CREATE TABLE municipalities (
     id SERIAL PRIMARY KEY,
     ibge_code INTEGER NOT NULL UNIQUE,
     state_id INTEGER NOT NULL REFERENCES states(id) ON DELETE RESTRICT,
+    microregion_id INTEGER REFERENCES microregions(id) ON DELETE SET NULL,
     name VARCHAR(150) NOT NULL,
     geom geometry(MultiPolygon, 4674) NOT NULL
 );
@@ -35,6 +44,9 @@ CREATE TABLE municipality_indicator_values (
 );
 
 CREATE INDEX idx_states_geom ON states USING GIST (geom);
+CREATE INDEX idx_microregions_geom ON microregions USING GIST (geom);
+CREATE INDEX idx_microregions_state_id ON microregions (state_id);
 CREATE INDEX idx_municipalities_geom ON municipalities USING GIST (geom);
 CREATE INDEX idx_municipalities_state_id ON municipalities (state_id);
+CREATE INDEX idx_municipalities_microregion_id ON municipalities (microregion_id);
 CREATE INDEX idx_indicator_values_indicator_id ON municipality_indicator_values (indicator_id);

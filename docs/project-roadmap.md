@@ -4,7 +4,7 @@ Este documento sera usado para organizar as etapas de desenvolvimento e aprendiz
 
 ## Etapa atual: MVP WebGIS
 
-- Frontend React com MapLibre GL JS
+- Frontend React com Leaflet
 - Backend FastAPI com endpoints mockados
 - Mapa base do Brasil
 - Camada simplificada de estados

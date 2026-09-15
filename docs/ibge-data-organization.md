@@ -45,6 +45,43 @@ As subpastas acima sao uma convencao local. Como `data/` esta no `.gitignore`, e
 5. Importar setores censitarios para `census_sectors`.
 6. Criar endpoints para consultar setores por municipio.
 
+## Campos identificados nas malhas
+
+`BR_UF_2025.zip`:
+
+- `CD_UF`: codigo da UF.
+- `NM_UF`: nome da UF.
+- `SIGLA_UF`: sigla da UF.
+- `AREA_KM2`: area da UF.
+
+`BR_Municipios_2025.zip`:
+
+- `CD_MUN`: codigo IBGE do municipio.
+- `NM_MUN`: nome do municipio.
+- `CD_UF`: codigo da UF.
+- `SIGLA_UF`: sigla da UF.
+- `AREA_KM2`: area do municipio.
+
+`BR_setores_CD2022.zip`:
+
+- Importacao prevista usando `CD_SETOR` como codigo do setor.
+- Importacao prevista usando `CD_MUN` para relacionar setor e municipio.
+- Os campos devem ser confirmados apos a extracao, pois o arquivo e grande e sera importado separadamente.
+
+## Script de importacao
+
+O script principal e:
+
+```bash
+database/import_ibge_shapes.sh
+```
+
+Por padrao, ele importa somente UFs e municipios. Para importar setores censitarios:
+
+```bash
+IMPORT_SECTORS=true database/import_ibge_shapes.sh
+```
+
 ## Endpoints futuros para setores
 
 Quando o backend estiver conectado ao PostGIS, o carregamento dos setores deve seguir este padrao:

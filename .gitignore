@@ -1,5 +1,6 @@
 # Dados locais
 data/
+openspec/
 
 # Python
 __pycache__/
