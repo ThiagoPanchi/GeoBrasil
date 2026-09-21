@@ -2,13 +2,13 @@ import type { Indicator, MunicipalityDetails } from '../types';
 import { formatValue } from '../utils/format';
 
 type MunicipalityPopupProps = {
-  municipality: MunicipalityDetails;
+  feature: MunicipalityDetails;
   indicators: Indicator[];
   selectedIndicator: string;
 };
 
 export function MunicipalityPopup({
-  municipality,
+  feature,
   indicators,
   selectedIndicator,
 }: MunicipalityPopupProps) {
@@ -16,10 +16,10 @@ export function MunicipalityPopup({
 
   return (
     <div className="municipality-popup">
-      <strong>{municipality.name}</strong>
-      <span>UF: {municipality.uf}</span>
+      <strong>{feature.name}</strong>
+      <span>UF: {feature.uf || 'Brasil'}</span>
       <span>
-        {indicator?.name ?? 'Indicador'}: {formatValue(municipality.indicators[selectedIndicator])}
+        {indicator?.name ?? 'Indicador'}: {formatValue(feature.indicators[selectedIndicator])}
       </span>
     </div>
   );

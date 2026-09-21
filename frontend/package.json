@@ -5,16 +5,20 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prepare:geodata": "node scripts/prepare-static-geodata.mjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:static": "npm run prepare:geodata && vite build",
+    "preview": "vite preview",
+    "preview:pages": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
+    "@types/leaflet": "^1.9.22",
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
+    "flatgeobuf": "^4.4.0",
+    "leaflet": "^1.9.4",
     "react": "latest",
     "react-dom": "latest",
-    "maplibre-gl": "latest"
-  },
-  "devDependencies": {}
+    "typescript": "latest",
+    "vite": "latest"
+  }
 }

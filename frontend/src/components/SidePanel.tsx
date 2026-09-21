@@ -2,34 +2,38 @@ import type { ChoroplethBreak, Indicator, MunicipalityDetails } from '../types';
 import { formatValue } from '../utils/format';
 
 type SidePanelProps = {
-  municipality: MunicipalityDetails | null;
+  selectedFeature: MunicipalityDetails | null;
   indicators: Indicator[];
   selectedIndicator: string;
   breaks: ChoroplethBreak[];
+  rows: MunicipalityDetails[];
 };
 
-export function SidePanel({ municipality, indicators, selectedIndicator, breaks }: SidePanelProps) {
+export function SidePanel({ selectedFeature, indicators, selectedIndicator, breaks, rows }: SidePanelProps) {
   const indicator = indicators.find((item) => item.id === selectedIndicator);
+  const topRows = [...rows]
+    .sort((a, b) => (b.indicators[selectedIndicator] ?? 0) - (a.indicators[selectedIndicator] ?? 0))
+    .slice(0, 6);
 
   return (
     <>
       <section className="info-card">
-        <h2>Municipio selecionado</h2>
-        {municipality ? (
+        <h2>Geometria selecionada</h2>
+        {selectedFeature ? (
           <dl>
             <dt>Nome</dt>
-            <dd>{municipality.name}</dd>
+            <dd>{selectedFeature.name}</dd>
             <dt>UF</dt>
-            <dd>{municipality.uf}</dd>
+            <dd>{selectedFeature.uf || 'Brasil'}</dd>
             <dt>Codigo IBGE</dt>
-            <dd>{municipality.id}</dd>
+            <dd>{selectedFeature.id}</dd>
             <dt>{indicator?.name ?? 'Indicador'}</dt>
             <dd>
-              {formatValue(municipality.indicators[selectedIndicator])} {indicator?.unit ?? ''}
+              {formatValue(selectedFeature.indicators[selectedIndicator])} {indicator?.unit ?? ''}
             </dd>
           </dl>
         ) : (
-          <p>Nenhum municipio selecionado.</p>
+          <p>Nenhuma geometria selecionada.</p>
         )}
       </section>
 
@@ -46,6 +50,30 @@ export function SidePanel({ municipality, indicators, selectedIndicator, breaks 
           ))
         ) : (
           <p>Selecione uma UF para gerar o coropletico.</p>
+        )}
+      </section>
+
+      <section className="info-card">
+        <h2>Grafico e tabela</h2>
+        {topRows.length > 0 ? (
+          <div className="ranking-list">
+            {topRows.map((row) => {
+              const value = row.indicators[selectedIndicator] ?? 0;
+              const max = topRows[0]?.indicators[selectedIndicator] ?? 1;
+
+              return (
+                <div className="ranking-row" key={`${row.layer}-${row.id}`}>
+                  <div>
+                    <strong>{row.name}</strong>
+                    <small>{formatValue(value)} {indicator?.unit ?? ''}</small>
+                  </div>
+                  <span style={{ width: `${Math.max(8, (value / Math.max(max, 1)) * 100)}%` }} />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p>Os registros carregados aparecerao aqui.</p>
         )}
       </section>
     </>
