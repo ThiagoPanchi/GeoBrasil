@@ -4,11 +4,13 @@ Projeto WebGIS para visualizacao e analise de dados do Censo Demografico do Bras
 
 ## Arquitetura atual
 
-O modo principal do portfolio e uma aplicacao estatica em React/Vite publicada em GitHub Pages. O WebGIS carrega assets FlatGeobuf pelo navegador, usando um manifesto estatico em `frontend/public/geodata/manifest.json`.
+O modo principal do portfolio e uma aplicacao estatica em React/Vite publicada em GitHub Pages. O WebGIS carrega assets FlatGeobuf pelo navegador, usando um manifesto estatico em `public/geodata/manifest.json`.
 
 ```text
 GeoBrasil/
-├── frontend/         # Aplicacao web React/Vite, scripts e assets publicados
+├── src/              # Aplicacao web React/Vite
+├── public/           # Assets estaticos publicados, incluindo geodata
+├── scripts/          # Scripts de preparacao dos assets estaticos
 ├── data/             # Dados fonte locais do IBGE para gerar assets estaticos
 ├── infrastructure/   # Configuracoes futuras
 └── docs/             # Documentacao tecnica
@@ -19,7 +21,7 @@ GeoBrasil/
 - Frontend: React, TypeScript e Vite
 - Mapas: Leaflet
 - Dados vetoriais: FlatGeobuf lido no navegador
-- Publicacao: GitHub Pages a partir de `frontend/dist`
+- Publicacao: GitHub Pages a partir da raiz do repositorio
 
 ## Funcionalidades do portfolio
 
@@ -43,7 +45,6 @@ Arquivos fonte esperados:
 Gerar assets particionados para o frontend:
 
 ```bash
-cd frontend
 npm install
 npm run prepare:geodata
 ```
@@ -52,16 +53,15 @@ O particionamento usa Node.js e a dependencia npm `flatgeobuf`; GDAL/`ogr2ogr` n
 
 O comando gera:
 
-- `frontend/public/geodata/ufs.fgb`
-- `frontend/public/geodata/municipalities/<UF>.fgb`
-- `frontend/public/geodata/microregions/<UF>.fgb`
-- `frontend/public/geodata/sectors/<CD_MUN>.fgb`
-- `frontend/public/geodata/manifest.json`
+- `public/geodata/ufs.fgb`
+- `public/geodata/municipalities/<UF>.fgb`
+- `public/geodata/microregions/<UF>.fgb`
+- `public/geodata/sectors/<CD_MUN>.fgb`
+- `public/geodata/manifest.json`
 
 ## Execucao local
 
 ```bash
-cd frontend
 npm install
 npm run prepare:geodata
 npm run dev
@@ -76,12 +76,11 @@ http://localhost:5173/GeoBrasil/
 ## Build e preview estatico
 
 ```bash
-cd frontend
 npm run build:static
 npm run preview:pages
 ```
 
-O build final fica em `frontend/dist` e inclui somente o bundle Vite e os assets copiados de `frontend/public/geodata/`.
+O build final fica em `dist` e inclui somente o bundle Vite e os assets copiados de `public/geodata/`.
 
 ## GitHub Pages
 
@@ -90,12 +89,11 @@ O Vite usa `base` com valor padrao `/GeoBrasil/`. Para outro nome de repositorio
 Exemplo:
 
 ```bash
-cd frontend
 $env:VITE_BASE_PATH = "/GeoBrasil/"
 npm run build:static
 ```
 
-Publique o conteudo de `frontend/dist` no GitHub Pages. A aplicacao publicada nao deve chamar `localhost:8000` nem depender de FastAPI/PostGIS.
+Configure o GitHub Pages para publicar a branch `main` a partir da raiz do repositorio. O `index.html` da aplicacao fica na raiz, e a aplicacao publicada nao deve chamar `localhost:8000` nem depender de FastAPI/PostGIS.
 
 Organizacao dos dados IBGE:
 

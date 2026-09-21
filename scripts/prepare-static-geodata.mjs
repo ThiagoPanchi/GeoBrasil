@@ -5,9 +5,9 @@ import { fileURLToPath } from 'node:url';
 import { geojson } from 'flatgeobuf';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(__dirname, '..', '..');
+const root = path.resolve(__dirname, '..');
 const sourceDir = path.join(root, 'data', 'FlatGeoBuf');
-const outputDir = path.join(root, 'frontend', 'public', 'geodata');
+const outputDir = path.join(root, 'public', 'geodata');
 
 const sources = {
   ufs: path.join(sourceDir, 'BR_UF_2025_simp.fgb'),

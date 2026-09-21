@@ -36,3 +36,16 @@ The system SHALL present clear user feedback when a required static asset cannot
 - **WHEN** the selected territorial context references an asset that is missing, inaccessible, or unreadable
 - **THEN** the interface displays an error state naming the affected context
 - **AND** the application keeps the previous valid map state when one exists
+
+### Requirement: Public static distribution is limited to required assets
+The system SHALL keep the GitHub Pages publication path limited to the static frontend bundle and the static geodata assets required by the browser WebGIS.
+
+#### Scenario: Build output for GitHub Pages
+- **WHEN** the static publication build is prepared
+- **THEN** the output intended for GitHub Pages contains the Vite application bundle and required geodata assets
+- **AND** it excludes legacy backend code, database scripts, local virtual environments, caches, and raw datasets that are not consumed by the published browser application
+
+#### Scenario: Repository guidance for static publication
+- **WHEN** a maintainer follows the documented publication workflow
+- **THEN** the instructions identify the static frontend and geodata preparation workflow as the supported path
+- **AND** they do not require FastAPI, PostgreSQL/PostGIS, or localhost services for the published page

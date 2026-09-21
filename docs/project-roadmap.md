@@ -6,7 +6,7 @@ Este documento sera usado para organizar as etapas de desenvolvimento e aprendiz
 
 - Frontend React/Vite publicado em GitHub Pages
 - Mapa Leaflet com assets FlatGeobuf carregados pelo navegador
-- Manifesto estatico em `frontend/public/geodata/manifest.json`
+- Manifesto estatico em `public/geodata/manifest.json`
 - Carregamento de municipios e microrregioes somente apos selecao da UF
 - Carregamento de setores censitarios somente apos selecao do municipio
 - Indicadores censitarios calculados e estilizados no cliente
@@ -16,5 +16,5 @@ Este documento sera usado para organizar as etapas de desenvolvimento e aprendiz
 
 - Refinar os indicadores derivados dos agregados censitarios disponiveis
 - Reduzir o tamanho dos assets estaticos quando necessario para melhorar carregamento
-- Automatizar a publicacao do conteudo de `frontend/dist` no GitHub Pages
+- Validar publicacao pelo GitHub Pages a partir da raiz do repositorio
 - Documentar atualizacoes dos arquivos fonte em `data/FlatGeoBuf/`

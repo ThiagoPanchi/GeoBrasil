@@ -30,19 +30,19 @@ data/
 └── BR_setores_CD2022.zip   # bruto local, nao publicado
 ```
 
-Arquivos brutos e extracoes intermediarias continuam locais. O build publicado consome somente os assets gerados em `frontend/public/geodata/`.
+Arquivos brutos e extracoes intermediarias continuam locais. O build publicado consome somente os assets gerados em `public/geodata/`.
 
 ## Assets estaticos gerados
 
-- `frontend/public/geodata/ufs.fgb`: camada inicial de UFs.
-- `frontend/public/geodata/municipalities/<UF>.fgb`: municipios particionados por UF.
-- `frontend/public/geodata/microregions/<UF>.fgb`: microrregioes particionadas por UF.
-- `frontend/public/geodata/sectors/<CD_MUN>.fgb`: setores particionados por municipio.
-- `frontend/public/geodata/manifest.json`: catalogo usado pelo navegador para resolver os assets.
+- `public/geodata/ufs.fgb`: camada inicial de UFs.
+- `public/geodata/municipalities/<UF>.fgb`: municipios particionados por UF.
+- `public/geodata/microregions/<UF>.fgb`: microrregioes particionadas por UF.
+- `public/geodata/sectors/<CD_MUN>.fgb`: setores particionados por municipio.
+- `public/geodata/manifest.json`: catalogo usado pelo navegador para resolver os assets.
 
 ## Fluxo de preparacao
 
 1. Atualizar os arquivos `data/FlatGeoBuf/*_simp.fgb` quando houver nova fonte tratada.
-2. Rodar `npm run prepare:geodata` em `frontend/`.
-3. Conferir `frontend/public/geodata/manifest.json` e os arquivos `.fgb` gerados.
-4. Rodar `npm run build:static` para produzir `frontend/dist`.
+2. Rodar `npm run prepare:geodata` na raiz do repositorio.
+3. Conferir `public/geodata/manifest.json` e os arquivos `.fgb` gerados.
+4. Rodar `npm run build:static` para produzir `dist`.
