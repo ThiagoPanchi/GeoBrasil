@@ -14,5 +14,5 @@ GeoBrasil opera como WebGIS estatico para portfolio. O frontend React/Vite e pub
 
 1. Atualizar os arquivos fonte em `data/FlatGeoBuf/` quando necessario.
 2. Rodar `npm run prepare:geodata` em `frontend/`.
-3. Rodar `npm run build` ou `npm run build:static`.
+3. Rodar `npm run build:static`.
 4. Publicar `frontend/dist` no GitHub Pages.

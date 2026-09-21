@@ -1,6 +1,6 @@
 # Organizacao Dos Dados IBGE
 
-Os arquivos brutos do IBGE ficam em `data/`, que nao deve ser versionada no Git.
+Os arquivos brutos do IBGE ficam em `data/` como insumos locais. Apenas os FlatGeobuf simplificados usados pelo gerador estatico devem ser preservados como fonte do fluxo atual.
 
 ## Malhas territoriais iniciais
 
@@ -20,37 +20,29 @@ Essa regra evita carregar geometrias muito pesadas no navegador e mantem a aplic
 
 ```text
 data/
-├── BR_UF_2025.zip
-├── BR_Municipios_2025.zip
-├── BR_setores_CD2022.zip
-├── agregados-censo/        # arquivos tabulares do Censo, quando forem extraidos
-├── extracted/              # arquivos extraidos localmente
-└── processed/              # dados tratados para importacao no banco
+├── FlatGeoBuf/
+│   ├── BR_UF_2025_simp.fgb
+│   ├── BR_Municipios_2025_simp.fgb
+│   ├── BR_Microrregioes_2022_simp.fgb
+│   └── BR_setores_CD2022_simp.fgb
+├── BR_UF_2025.zip          # bruto local, nao publicado
+├── BR_Municipios_2025.zip  # bruto local, nao publicado
+└── BR_setores_CD2022.zip   # bruto local, nao publicado
 ```
 
-As subpastas acima sao uma convencao local. Como `data/` esta no `.gitignore`, elas nao precisam ser versionadas.
+Arquivos brutos e extracoes intermediarias continuam locais. O build publicado consome somente os assets gerados em `frontend/public/geodata/`.
 
-## Modelo espacial esperado
+## Assets estaticos gerados
 
-- `states`: recebe a malha `BR_UF_2025.zip`.
-- `municipalities`: recebe a malha `BR_Municipios_2025.zip` e se relaciona com `states`.
-- `census_sectors`: recebe a malha `BR_setores_CD2022.zip` e se relaciona com `municipalities`.
+- `frontend/public/geodata/ufs.fgb`: camada inicial de UFs.
+- `frontend/public/geodata/municipalities/<UF>.fgb`: municipios particionados por UF.
+- `frontend/public/geodata/microregions/<UF>.fgb`: microrregioes particionadas por UF.
+- `frontend/public/geodata/sectors/<CD_MUN>.fgb`: setores particionados por municipio.
+- `frontend/public/geodata/manifest.json`: catalogo usado pelo navegador para resolver os assets.
 
-## Fluxo futuro de importacao
+## Fluxo de preparacao
 
-1. Extrair os arquivos `.zip` em `data/extracted/`.
-2. Conferir os nomes dos campos de codigo IBGE em cada malha.
-3. Importar UFs para `states`.
-4. Importar municipios para `municipalities`.
-5. Importar setores censitarios para `census_sectors`.
-6. Criar endpoints para consultar setores por municipio.
-
-## Endpoints futuros para setores
-
-Quando o backend estiver conectado ao PostGIS, o carregamento dos setores deve seguir este padrao:
-
-```text
-GET /municipalities/{municipality_id}/sectors
-```
-
-Esse endpoint deve retornar apenas os setores censitarios do municipio selecionado, preferencialmente em GeoJSON ou em tiles vetoriais em uma etapa posterior.
+1. Atualizar os arquivos `data/FlatGeoBuf/*_simp.fgb` quando houver nova fonte tratada.
+2. Rodar `npm run prepare:geodata` em `frontend/`.
+3. Conferir `frontend/public/geodata/manifest.json` e os arquivos `.fgb` gerados.
+4. Rodar `npm run build:static` para produzir `frontend/dist`.

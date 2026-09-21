@@ -8,11 +8,8 @@ O modo principal do portfolio e uma aplicacao estatica em React/Vite publicada e
 
 ```text
 GeoBrasil/
-├── frontend/         # Aplicacao web React/Vite e assets publicados
-├── data/             # Dados fonte do IBGE, incluindo FlatGeoBuf nacionais
-├── scripts/          # Scripts auxiliares historicos ou futuros
-├── backend/          # Legado FastAPI, nao exigido no portfolio estatico
-├── database/         # Legado PostgreSQL/PostGIS, nao exigido no portfolio estatico
+├── frontend/         # Aplicacao web React/Vite, scripts e assets publicados
+├── data/             # Dados fonte locais do IBGE para gerar assets estaticos
 ├── infrastructure/   # Configuracoes futuras
 └── docs/             # Documentacao tecnica
 ```
@@ -20,10 +17,9 @@ GeoBrasil/
 ## Tecnologias
 
 - Frontend: React, TypeScript e Vite
-- Mapas: MapLibre GL JS
+- Mapas: Leaflet
 - Dados vetoriais: FlatGeobuf lido no navegador
 - Publicacao: GitHub Pages a partir de `frontend/dist`
-- Legado: FastAPI e PostgreSQL/PostGIS permanecem no repositorio, mas nao sao necessarios para executar o portfolio estatico
 
 ## Funcionalidades do portfolio
 
@@ -85,7 +81,7 @@ npm run build:static
 npm run preview:pages
 ```
 
-O build final fica em `frontend/dist` e inclui os assets copiados de `frontend/public/geodata/`.
+O build final fica em `frontend/dist` e inclui somente o bundle Vite e os assets copiados de `frontend/public/geodata/`.
 
 ## GitHub Pages
 
@@ -100,10 +96,6 @@ npm run build:static
 ```
 
 Publique o conteudo de `frontend/dist` no GitHub Pages. A aplicacao publicada nao deve chamar `localhost:8000` nem depender de FastAPI/PostGIS.
-
-## Legado backend e banco
-
-`backend/` e `database/` documentam a fase anterior do MVP com API mockada e scripts PostGIS. Eles nao fazem parte do caminho operacional do portfolio estatico.
 
 Organizacao dos dados IBGE:
 

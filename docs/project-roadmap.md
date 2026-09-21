@@ -2,22 +2,19 @@
 
 Este documento sera usado para organizar as etapas de desenvolvimento e aprendizado do projeto.
 
-## Etapa atual: MVP WebGIS
+## Etapa atual: portfolio WebGIS estatico
 
-- Frontend React com MapLibre GL JS
-- Backend FastAPI com endpoints mockados
-- Mapa base do Brasil
-- Camada simplificada de estados
-- Carregamento de municipios somente apos selecao da UF
-- Indicadores censitarios mockados
-- Mapa coropletico por indicador
-- Popup e painel lateral para municipio selecionado
+- Frontend React/Vite publicado em GitHub Pages
+- Mapa Leaflet com assets FlatGeobuf carregados pelo navegador
+- Manifesto estatico em `frontend/public/geodata/manifest.json`
+- Carregamento de municipios e microrregioes somente apos selecao da UF
+- Carregamento de setores censitarios somente apos selecao do municipio
+- Indicadores censitarios calculados e estilizados no cliente
+- Popup, legenda, painel lateral e tabela/ranking para o contexto carregado
 
 ## Proximas etapas previstas
 
-- Substituir dados mockados por malhas oficiais do IBGE
-- Criar banco PostgreSQL/PostGIS
-- Importar geometrias de estados e municipios
-- Importar setores censitarios com carregamento sob demanda por municipio
-- Modelar tabelas de indicadores censitarios
-- Conectar endpoints do FastAPI ao banco espacial
+- Refinar os indicadores derivados dos agregados censitarios disponiveis
+- Reduzir o tamanho dos assets estaticos quando necessario para melhorar carregamento
+- Automatizar a publicacao do conteudo de `frontend/dist` no GitHub Pages
+- Documentar atualizacoes dos arquivos fonte em `data/FlatGeoBuf/`
