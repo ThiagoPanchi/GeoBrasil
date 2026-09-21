@@ -21,7 +21,7 @@ GeoBrasil/
 - Frontend: React, TypeScript e Vite
 - Mapas: Leaflet
 - Dados vetoriais: FlatGeobuf lido no navegador
-- Publicacao: GitHub Pages a partir da raiz do repositorio
+- Publicacao: GitHub Pages via GitHub Actions publicando o artefato `dist`
 
 ## Funcionalidades do portfolio
 
@@ -93,7 +93,9 @@ $env:VITE_BASE_PATH = "/GeoBrasil/"
 npm run build:static
 ```
 
-Configure o GitHub Pages para publicar a branch `main` a partir da raiz do repositorio. O `index.html` da aplicacao fica na raiz, e a aplicacao publicada nao deve chamar `localhost:8000` nem depender de FastAPI/PostGIS.
+Configure o GitHub Pages para usar `GitHub Actions` como source. O workflow `.github/workflows/deploy-pages.yml` executa `npm ci`, gera o build de producao com `npm run build` e publica o diretorio `dist` como artefato do Pages.
+
+Nao publique a branch `main` diretamente a partir da raiz: o `index.html` da raiz e fonte do Vite e referencia `src/main.tsx`, enquanto a pagina publicada deve servir o `dist/index.html` gerado pelo build. A aplicacao publicada nao deve chamar `localhost:8000` nem depender de FastAPI/PostGIS.
 
 Organizacao dos dados IBGE:
 
