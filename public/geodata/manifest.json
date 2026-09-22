@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-22T18:50:19.846Z",
+  "generatedAt": "2026-09-22T22:35:54.905Z",
   "assets": {
     "ufs": "geodata/ufs.fgb"
   },
@@ -18,26 +18,6 @@
       "id": "households",
       "name": "Domicilios",
       "unit": "domicilios"
-    },
-    {
-      "id": "literacy",
-      "name": "Alfabetizacao",
-      "unit": "pessoas"
-    },
-    {
-      "id": "ethnicity_race",
-      "name": "Cor ou raca",
-      "unit": "pessoas"
-    },
-    {
-      "id": "gender_sex",
-      "name": "Sexo",
-      "unit": "pessoas"
-    },
-    {
-      "id": "age_group",
-      "name": "Grupo de idade",
-      "unit": "pessoas"
     },
     {
       "id": "responsible_persons",

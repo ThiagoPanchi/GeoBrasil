@@ -279,10 +279,6 @@ function normalizeIndicators(indicators: unknown, properties: GeoJSON.GeoJsonPro
     population,
     density: area > 0 ? population / area : 0,
     households: toNumber(properties?.v0002),
-    literacy: toNumber(properties?.v0003),
-    ethnicity_race: toNumber(properties?.v0004),
-    gender_sex: toNumber(properties?.v0005),
-    age_group: toNumber(properties?.v0006),
     responsible_persons: toNumber(properties?.v0007),
     income: toNumber(properties?.V06004),
   };

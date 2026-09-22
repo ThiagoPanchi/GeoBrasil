@@ -22,10 +22,6 @@ const indicators = [
   { id: 'population', name: 'Populacao total', unit: 'habitantes', property: 'v0001' },
   { id: 'density', name: 'Densidade demografica', unit: 'hab/km2', property: 'density' },
   { id: 'households', name: 'Domicilios', unit: 'domicilios', property: 'v0002' },
-  { id: 'literacy', name: 'Alfabetizacao', unit: 'pessoas', property: 'v0003' },
-  { id: 'ethnicity_race', name: 'Cor ou raca', unit: 'pessoas', property: 'v0004' },
-  { id: 'gender_sex', name: 'Sexo', unit: 'pessoas', property: 'v0005' },
-  { id: 'age_group', name: 'Grupo de idade', unit: 'pessoas', property: 'v0006' },
   { id: 'responsible_persons', name: 'Pessoas responsaveis em domicilios particulares', unit: 'pessoas', property: 'v0007' },
   { id: 'income', name: 'Renda media mensal dos responsaveis', unit: 'R$', property: 'V06004' },
 ];
@@ -275,10 +271,6 @@ function sectorIndicators(properties, incomeBySector) {
     population,
     density: area > 0 ? population / area : 0,
     households: getNumber(properties.v0002),
-    literacy: getNumber(properties.v0003),
-    ethnicity_race: getNumber(properties.v0004),
-    gender_sex: getNumber(properties.v0005),
-    age_group: getNumber(properties.v0006),
     responsible_persons: getNumber(properties.v0007),
     income: getNumber(incomeBySector.get(sectorId)),
   };
@@ -412,7 +404,7 @@ function addToGroup(map, key, feature) {
 }
 
 function emptyAggregate() {
-  return { population: 0, density: 0, households: 0, literacy: 0, ethnicity_race: 0, gender_sex: 0, age_group: 0, responsible_persons: 0, income: 0, incomeWeightedTotal: 0, incomeWeight: 0, area: 0 };
+  return { population: 0, density: 0, households: 0, responsible_persons: 0, income: 0, incomeWeightedTotal: 0, incomeWeight: 0, area: 0 };
 }
 
 async function main() {

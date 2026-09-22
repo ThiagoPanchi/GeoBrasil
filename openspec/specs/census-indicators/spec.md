@@ -7,11 +7,12 @@ Define como o GeoBrasil disponibiliza indicadores do Censo 2022 para visualizaca
 ## Requirements
 
 ### Requirement: Catalogo de indicadores do MVP
-The system SHALL provide the MVP indicator catalog from static metadata with population, demographic density, households, literacy, ethnicity/race, gender/sex, age group, responsible-person count, and average monthly income of responsible persons.
+The system SHALL provide the MVP indicator catalog from static metadata with population, demographic density, households, responsible-person count, and average monthly income of responsible persons.
 
 #### Scenario: Listar indicadores
 - **WHEN** the user opens the indicator selector
-- **THEN** the system lists all MVP indicators from static metadata with display name and unit or category context when available
+- **THEN** the system lists only the supported MVP indicators from static metadata with display name and unit or category context when available
+- **AND** the system does not list literacy, ethnicity/race, gender/sex, or age group as selectable indicators
 
 #### Scenario: Identificar renda media mensal dos responsaveis
 - **WHEN** the user views the income indicator in the catalog
@@ -24,7 +25,7 @@ The system SHALL provide the MVP indicator catalog from static metadata with pop
 - **AND** the indicator is not labeled as income
 
 ### Requirement: Consulta de valores por contexto territorial
-The system SHALL provide indicator values only for records in the currently displayed territorial context from static assets or static metadata available to the frontend.
+The system SHALL provide indicator values only for supported catalog indicators and only for records in the currently displayed territorial context from static assets or static metadata available to the frontend.
 
 #### Scenario: Valores para UFs
 - **WHEN** the current layer is UFs and the user selects an indicator
@@ -47,6 +48,10 @@ The system SHALL provide indicator values only for records in the currently disp
 - **WHEN** the user selects the responsible-person count indicator
 - **THEN** sector, municipality, microregion, and UF records provide the count value separately from the income indicator
 
+#### Scenario: Indicadores removidos nao retornam valores exibidos
+- **WHEN** the system prepares or normalizes indicator values for displayed records
+- **THEN** literacy, ethnicity/race, gender/sex, and age group are not exposed as displayed indicator values
+
 ### Requirement: Troca de indicador sem recarregar geometria desnecessaria
 The system SHALL avoid rereading heavy static geometry when only the selected indicator changes and the current territorial geometry remains valid.
 
@@ -61,10 +66,3 @@ The system SHALL provide demographic density as population relative to territori
 #### Scenario: Exibir densidade
 - **WHEN** the user selects the demographic density indicator
 - **THEN** each displayed territorial record includes a density value compatible with its population and area
-
-### Requirement: Categorias de indicadores agregados
-The system SHALL represent categorical or distribution indicators using the categories available in the Censo 2022 source data.
-
-#### Scenario: Exibir indicador categorico
-- **WHEN** the user selects ethnicity/race, gender/sex, or age group
-- **THEN** the system exposes values by source category for the displayed territorial records
