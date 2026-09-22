@@ -18,6 +18,6 @@
 ## 4. Verify Deployment Readiness
 
 - [x] 4.1 Verify `.github/workflows/deploy-pages.yml` does not depend on ignored local `data/FlatGeoBuf` files or the old `frontend/node_modules` directory.
-- [ ] 4.2 After pushing, verify the GitHub Actions run completes successfully and the repository Pages settings use `GitHub Actions` as the source.
-- [ ] 4.3 After deployment, verify `https://thiagopanchi.github.io/GeoBrasil/` loads bundled assets from `/GeoBrasil/assets/` and no longer requests `/src/main.tsx`.
+- [x] 4.2 After pushing, verify the GitHub Actions run completes successfully and the repository Pages settings use `GitHub Actions` as the source.
+- [x] 4.3 After deployment, verify `https://thiagopanchi.github.io/GeoBrasil/` loads bundled assets from `/GeoBrasil/assets/` and no longer requests `/src/main.tsx`.
 - [x] 4.4 Run OpenSpec validation for `deploy-dist-with-github-actions-pages` and verify the change artifacts pass validation.

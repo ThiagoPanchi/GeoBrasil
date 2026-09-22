@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-21T20:29:16.868Z",
+  "generatedAt": "2026-09-22T18:50:19.846Z",
   "assets": {
     "ufs": "geodata/ufs.fgb"
   },
@@ -40,9 +40,14 @@
       "unit": "pessoas"
     },
     {
+      "id": "responsible_persons",
+      "name": "Pessoas responsaveis em domicilios particulares",
+      "unit": "pessoas"
+    },
+    {
       "id": "income",
-      "name": "Renda",
-      "unit": "indice"
+      "name": "Renda media mensal dos responsaveis",
+      "unit": "R$"
     }
   ],
   "ufs": [

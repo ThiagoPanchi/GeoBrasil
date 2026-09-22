@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { getIndicators, getMicroregionsByState, getMunicipalitiesByMicroregion, getStates } from '../api';
+import { DashboardPanel } from '../components/DashboardPanel';
 import { IndicatorSelector } from '../components/IndicatorSelector';
 import { LayerControl } from '../components/LayerControl';
 import { MapView } from '../components/MapView';
 import { SidePanel } from '../components/SidePanel';
-import type { ChoroplethBreak, Indicator, Microregion, MunicipalityDetails, MunicipalityOption, TerritorialLayer, Uf } from '../types';
+import type { ChoroplethBreak, ColorScale, Indicator, Microregion, MunicipalityDetails, MunicipalityOption, TerritorialLayer, Uf } from '../types';
 
 export function MapPage() {
   const [ufs, setUfs] = useState<Uf[]>([]);
@@ -16,7 +17,9 @@ export function MapPage() {
   const [currentLayer, setCurrentLayer] = useState<TerritorialLayer>('ufs');
   const [indicators, setIndicators] = useState<Indicator[]>([]);
   const [selectedIndicator, setSelectedIndicator] = useState('population');
+  const [colorScale, setColorScale] = useState<ColorScale>('blue');
   const [selectedFeature, setSelectedFeature] = useState<MunicipalityDetails | null>(null);
+  const [focusedFeatureKey, setFocusedFeatureKey] = useState<string | null>(null);
   const [rows, setRows] = useState<MunicipalityDetails[]>([]);
   const [breaks, setBreaks] = useState<ChoroplethBreak[]>([]);
   const [status, setStatus] = useState('Carregando catalogo estatico...');
@@ -74,6 +77,7 @@ export function MapPage() {
     setSelectedMunicipalityId('');
     setMunicipalities([]);
     setSelectedFeature(null);
+    setFocusedFeatureKey(null);
     setRows([]);
     setBreaks([]);
     setCurrentLayer(uf ? 'microregions' : 'ufs');
@@ -83,18 +87,21 @@ export function MapPage() {
     setSelectedMicroregion(microregionId);
     setSelectedMunicipalityId('');
     setSelectedFeature(null);
+    setFocusedFeatureKey(null);
     setCurrentLayer(microregionId ? 'municipalities' : 'microregions');
   }
 
   function handleMunicipalityChange(municipalityId: string) {
     setSelectedMunicipalityId(municipalityId);
     setSelectedFeature(null);
+    setFocusedFeatureKey(null);
     setCurrentLayer(municipalityId ? 'sectors' : 'municipalities');
   }
 
   function handleLayerChange(layer: TerritorialLayer) {
     setCurrentLayer(layer);
     setSelectedFeature(null);
+    setFocusedFeatureKey(null);
 
     if (layer === 'ufs') {
       setSelectedUf('');
@@ -107,21 +114,40 @@ export function MapPage() {
     }
   }
 
+  function handleIndicatorChange(indicatorId: string) {
+    setSelectedIndicator(indicatorId);
+    setSelectedFeature(null);
+    setFocusedFeatureKey(null);
+  }
+
   function handleMunicipalitySelect(municipalityId: string) {
     setSelectedMunicipalityId(municipalityId);
+    setFocusedFeatureKey(null);
     setCurrentLayer('sectors');
   }
 
   function handleBack() {
     if (currentLayer === 'sectors') {
       setSelectedMunicipalityId('');
+      setFocusedFeatureKey(null);
       setCurrentLayer('municipalities');
     } else if (currentLayer === 'municipalities' && selectedMicroregion) {
       setSelectedMicroregion('');
+      setFocusedFeatureKey(null);
       setCurrentLayer('microregions');
     } else if (currentLayer === 'municipalities' || currentLayer === 'microregions') {
       handleLayerChange('ufs');
     }
+  }
+
+  function handleFeatureSelect(feature: MunicipalityDetails | null) {
+    setSelectedFeature(feature);
+    setFocusedFeatureKey(null);
+  }
+
+  function handleDashboardRowSelect(row: MunicipalityDetails) {
+    setSelectedFeature(row);
+    setFocusedFeatureKey(featureKey(row));
   }
 
   return (
@@ -151,35 +177,51 @@ export function MapPage() {
         <IndicatorSelector
           indicators={indicators}
           selectedIndicator={selectedIndicator}
-          onIndicatorChange={setSelectedIndicator}
+          onIndicatorChange={handleIndicatorChange}
         />
 
         <SidePanel
           selectedFeature={selectedFeature}
           indicators={indicators}
           selectedIndicator={selectedIndicator}
-          breaks={breaks}
-          rows={rows}
         />
 
         <p className="status">{status}</p>
       </aside>
 
-      <MapView
-        selectedUf={selectedUf}
-        selectedMicroregion={selectedMicroregion}
-        selectedMunicipalityId={selectedMunicipalityId}
-        currentLayer={currentLayer}
-        selectedIndicator={selectedIndicator}
-        indicators={indicators}
-        onBreaksChange={setBreaks}
-        onRowsChange={setRows}
-        onFeatureSelect={setSelectedFeature}
-        onUfSelect={handleUfChange}
-        onMicroregionSelect={handleMicroregionChange}
-        onMunicipalitySelect={handleMunicipalitySelect}
-        onStatusChange={setStatus}
-      />
+      <section className="main-content">
+        <MapView
+          selectedUf={selectedUf}
+          selectedMicroregion={selectedMicroregion}
+          selectedMunicipalityId={selectedMunicipalityId}
+          currentLayer={currentLayer}
+          selectedIndicator={selectedIndicator}
+          colorScale={colorScale}
+          indicators={indicators}
+          breaks={breaks}
+          focusedFeatureKey={focusedFeatureKey}
+          onBreaksChange={setBreaks}
+          onRowsChange={setRows}
+          onFeatureSelect={handleFeatureSelect}
+          onUfSelect={handleUfChange}
+          onMicroregionSelect={handleMicroregionChange}
+          onMunicipalitySelect={handleMunicipalitySelect}
+          onStatusChange={setStatus}
+          onColorScaleChange={setColorScale}
+        />
+
+        <DashboardPanel
+          rows={rows}
+          indicators={indicators}
+          selectedIndicator={selectedIndicator}
+          selectedFeature={selectedFeature}
+          onRowSelect={handleDashboardRowSelect}
+        />
+      </section>
     </main>
   );
+}
+
+function featureKey(feature: MunicipalityDetails) {
+  return `${feature.layer}-${feature.id}`;
 }

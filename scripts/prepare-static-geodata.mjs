@@ -2,12 +2,14 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { inflateRawSync } from 'node:zlib';
 import { geojson } from 'flatgeobuf';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const sourceDir = path.join(root, 'data', 'FlatGeoBuf');
 const outputDir = path.join(root, 'public', 'geodata');
+const incomeAggregateSource = path.join(root, 'data', 'Agregados_por_setores_renda_responsavel_BR_20260508_csv.zip');
 
 const sources = {
   ufs: path.join(sourceDir, 'BR_UF_2025_simp.fgb'),
@@ -24,15 +26,169 @@ const indicators = [
   { id: 'ethnicity_race', name: 'Cor ou raca', unit: 'pessoas', property: 'v0004' },
   { id: 'gender_sex', name: 'Sexo', unit: 'pessoas', property: 'v0005' },
   { id: 'age_group', name: 'Grupo de idade', unit: 'pessoas', property: 'v0006' },
-  { id: 'income', name: 'Renda', unit: 'indice', property: 'v0007' },
+  { id: 'responsible_persons', name: 'Pessoas responsaveis em domicilios particulares', unit: 'pessoas', property: 'v0007' },
+  { id: 'income', name: 'Renda media mensal dos responsaveis', unit: 'R$', property: 'V06004' },
 ];
 
 function requireSources() {
-  const missing = Object.values(sources).filter((file) => !existsSync(file));
+  const missing = [...Object.values(sources), incomeAggregateSource].filter((file) => !existsSync(file));
 
   if (missing.length > 0) {
-    throw new Error(`Required FlatGeoBuf source files are missing:\n${missing.map((file) => `- ${file}`).join('\n')}`);
+    throw new Error(`Required geodata source files are missing:\n${missing.map((file) => `- ${file}`).join('\n')}`);
   }
+}
+
+function readUInt32(buffer, offset) {
+  return buffer.readUInt32LE(offset);
+}
+
+function readUInt16(buffer, offset) {
+  return buffer.readUInt16LE(offset);
+}
+
+function extractFirstCsvFromZip(buffer) {
+  const eocdSignature = 0x06054b50;
+  let eocdOffset = -1;
+
+  for (let offset = buffer.length - 22; offset >= Math.max(0, buffer.length - 66000); offset -= 1) {
+    if (readUInt32(buffer, offset) === eocdSignature) {
+      eocdOffset = offset;
+      break;
+    }
+  }
+
+  if (eocdOffset < 0) {
+    throw new Error(`Invalid ZIP file: ${incomeAggregateSource}`);
+  }
+
+  const centralDirectorySize = readUInt32(buffer, eocdOffset + 12);
+  const centralDirectoryOffset = readUInt32(buffer, eocdOffset + 16);
+  let offset = centralDirectoryOffset;
+
+  while (offset < centralDirectoryOffset + centralDirectorySize) {
+    if (readUInt32(buffer, offset) !== 0x02014b50) {
+      throw new Error(`Invalid ZIP central directory in ${incomeAggregateSource}`);
+    }
+
+    const compressionMethod = readUInt16(buffer, offset + 10);
+    const compressedSize = readUInt32(buffer, offset + 20);
+    const fileNameLength = readUInt16(buffer, offset + 28);
+    const extraLength = readUInt16(buffer, offset + 30);
+    const commentLength = readUInt16(buffer, offset + 32);
+    const localHeaderOffset = readUInt32(buffer, offset + 42);
+    const fileName = buffer.toString('utf8', offset + 46, offset + 46 + fileNameLength);
+
+    if (/\.csv$/i.test(fileName)) {
+      if (readUInt32(buffer, localHeaderOffset) !== 0x04034b50) {
+        throw new Error(`Invalid ZIP local header for ${fileName}`);
+      }
+
+      const localFileNameLength = readUInt16(buffer, localHeaderOffset + 26);
+      const localExtraLength = readUInt16(buffer, localHeaderOffset + 28);
+      const dataOffset = localHeaderOffset + 30 + localFileNameLength + localExtraLength;
+      const compressed = buffer.subarray(dataOffset, dataOffset + compressedSize);
+      const data = compressionMethod === 0 ? compressed : compressionMethod === 8 ? inflateRawSync(compressed) : null;
+
+      if (!data) {
+        throw new Error(`Unsupported ZIP compression method ${compressionMethod} for ${fileName}`);
+      }
+
+      return data.toString('utf8').replace(/^\uFEFF/, '');
+    }
+
+    offset += 46 + fileNameLength + extraLength + commentLength;
+  }
+
+  throw new Error(`No CSV file found in ${incomeAggregateSource}`);
+}
+
+function detectDelimiter(headerLine) {
+  return [';', ',', '\t'].reduce((best, delimiter) => {
+    const count = headerLine.split(delimiter).length;
+    return count > best.count ? { delimiter, count } : best;
+  }, { delimiter: ';', count: 0 }).delimiter;
+}
+
+function parseDelimitedLine(line, delimiter) {
+  const values = [];
+  let current = '';
+  let quoted = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+
+    if (char === '"') {
+      if (quoted && line[index + 1] === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        quoted = !quoted;
+      }
+    } else if (char === delimiter && !quoted) {
+      values.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  values.push(current);
+  return values;
+}
+
+function parseLocalizedNumber(value) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  const text = String(value ?? '').trim();
+
+  if (!text || text === '-' || text.toLowerCase() === 'x') {
+    return 0;
+  }
+
+  const normalized = text.includes(',')
+    ? text.replace(/\./g, '').replace(',', '.')
+    : text;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function findColumn(headers, candidates) {
+  const normalizedCandidates = new Set(candidates.map((item) => item.toLowerCase()));
+  return headers.findIndex((header) => normalizedCandidates.has(header.trim().toLowerCase()));
+}
+
+async function readIncomeBySector() {
+  const csv = extractFirstCsvFromZip(await readFile(incomeAggregateSource));
+  const lines = csv.split(/\r?\n/).filter((line) => line.trim().length > 0);
+
+  if (lines.length < 2) {
+    throw new Error(`Income aggregate CSV has no data rows: ${incomeAggregateSource}`);
+  }
+
+  const delimiter = detectDelimiter(lines[0]);
+  const headers = parseDelimitedLine(lines[0], delimiter);
+  const sectorIndex = findColumn(headers, ['CD_SETOR', 'cd_setor', 'Cod_setor', 'cod_setor', 'setor']);
+  const incomeIndex = findColumn(headers, ['V06004', 'v06004']);
+
+  if (sectorIndex < 0 || incomeIndex < 0) {
+    throw new Error(`Income aggregate CSV must contain sector identifier and V06004 columns. Found: ${headers.join(', ')}`);
+  }
+
+  const incomeBySector = new Map();
+
+  for (const line of lines.slice(1)) {
+    const row = parseDelimitedLine(line, delimiter);
+    const sectorId = String(row[sectorIndex] ?? '').trim();
+
+    if (sectorId) {
+      incomeBySector.set(sectorId, parseLocalizedNumber(row[incomeIndex]));
+    }
+  }
+
+  console.log(`Income aggregate rows loaded: ${incomeBySector.size}`);
+  return incomeBySector;
 }
 
 async function readFlatGeobuf(file) {
@@ -107,13 +263,13 @@ function byCode(items) {
 }
 
 function getNumber(value) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+  return parseLocalizedNumber(value);
 }
 
-function sectorIndicators(properties) {
+function sectorIndicators(properties, incomeBySector) {
   const population = getNumber(properties.v0001);
   const area = getNumber(properties.AREA_KM2);
+  const sectorId = String(properties.CD_SETOR ?? '');
 
   return {
     population,
@@ -123,23 +279,38 @@ function sectorIndicators(properties) {
     ethnicity_race: getNumber(properties.v0004),
     gender_sex: getNumber(properties.v0005),
     age_group: getNumber(properties.v0006),
-    income: getNumber(properties.v0007),
+    responsible_persons: getNumber(properties.v0007),
+    income: getNumber(incomeBySector.get(sectorId)),
   };
 }
 
 function addIndicators(target, values) {
   for (const indicator of indicators) {
+    if (indicator.id === 'income') {
+      continue;
+    }
+
     target[indicator.id] = getNumber(target[indicator.id]) + getNumber(values[indicator.id]);
   }
+
+  const weight = getNumber(values.responsible_persons);
+  target.incomeWeightedTotal = getNumber(target.incomeWeightedTotal) + getNumber(values.income) * weight;
+  target.incomeWeight = getNumber(target.incomeWeight) + weight;
 }
 
 function finalizeDensity(target, area) {
   target.density = area > 0 ? getNumber(target.population) / area : 0;
 }
 
-function normalizeSector(feature) {
+function finalizeIncome(target) {
+  target.income = getNumber(target.incomeWeight) > 0 ? getNumber(target.incomeWeightedTotal) / getNumber(target.incomeWeight) : 0;
+  delete target.incomeWeightedTotal;
+  delete target.incomeWeight;
+}
+
+function normalizeSector(feature, incomeBySector) {
   const properties = feature.properties ?? {};
-  const indicatorsValue = sectorIndicators(properties);
+  const indicatorsValue = sectorIndicators(properties, incomeBySector);
 
   return {
     ...feature,
@@ -162,8 +333,10 @@ function normalizeSector(feature) {
 function normalizeMunicipality(feature, aggregate) {
   const properties = feature.properties ?? {};
   const area = getNumber(properties.AREA_KM2);
-  const indicatorValues = aggregate ? { ...aggregate } : { population: 0, density: 0, households: 0, literacy: 0, ethnicity_race: 0, gender_sex: 0, age_group: 0, income: 0 };
+  const indicatorValues = aggregate ? { ...aggregate } : emptyAggregate();
   finalizeDensity(indicatorValues, area);
+  finalizeIncome(indicatorValues);
+  delete indicatorValues.area;
 
   return {
     ...feature,
@@ -185,8 +358,9 @@ function normalizeMunicipality(feature, aggregate) {
 
 function normalizeMicroregion(feature, aggregate) {
   const properties = feature.properties ?? {};
-  const indicatorValues = aggregate ? { ...aggregate } : { population: 0, density: 0, households: 0, literacy: 0, ethnicity_race: 0, gender_sex: 0, age_group: 0, income: 0 };
+  const indicatorValues = aggregate ? { ...aggregate } : emptyAggregate();
   finalizeDensity(indicatorValues, getNumber(indicatorValues.area));
+  finalizeIncome(indicatorValues);
   delete indicatorValues.area;
 
   return {
@@ -207,8 +381,10 @@ function normalizeMicroregion(feature, aggregate) {
 
 function normalizeUf(feature, aggregate) {
   const properties = feature.properties ?? {};
-  const indicatorValues = aggregate ? { ...aggregate } : { population: 0, density: 0, households: 0, literacy: 0, ethnicity_race: 0, gender_sex: 0, age_group: 0, income: 0 };
+  const indicatorValues = aggregate ? { ...aggregate } : emptyAggregate();
   finalizeDensity(indicatorValues, getNumber(properties.AREA_KM2));
+  finalizeIncome(indicatorValues);
+  delete indicatorValues.area;
 
   return {
     ...feature,
@@ -236,11 +412,12 @@ function addToGroup(map, key, feature) {
 }
 
 function emptyAggregate() {
-  return { population: 0, density: 0, households: 0, literacy: 0, ethnicity_race: 0, gender_sex: 0, age_group: 0, income: 0, area: 0 };
+  return { population: 0, density: 0, households: 0, literacy: 0, ethnicity_race: 0, gender_sex: 0, age_group: 0, responsible_persons: 0, income: 0, incomeWeightedTotal: 0, incomeWeight: 0, area: 0 };
 }
 
 async function main() {
   requireSources();
+  const incomeBySector = await readIncomeBySector();
   await rm(outputDir, { recursive: true, force: true });
   await mkdir(outputDir, { recursive: true });
 
@@ -251,7 +428,7 @@ async function main() {
   const ufAggregates = new Map();
 
   for (const feature of await readFlatGeobuf(sources.sectors)) {
-    const normalized = normalizeSector(feature);
+    const normalized = normalizeSector(feature, incomeBySector);
     const props = normalized.properties;
     const values = props.indicators;
     const municipalityId = props.municipalityId;

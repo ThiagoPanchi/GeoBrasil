@@ -7,34 +7,69 @@ Define a sincronizacao entre mapa, seletores, graficos, tabela e feedback operac
 ## Requirements
 
 ### Requirement: Estado compartilhado da aplicacao
-The system SHALL maintain shared application state for selected UF, selected microregion, selected municipality, selected census sector, current layer, selected indicator, and selected feature.
+The system SHALL maintain shared application state for selected UF, selected microregion, selected municipality, selected census sector, current layer, selected indicator, selected feature, and map information mode.
 
 #### Scenario: Atualizar estado por seletor
 - **WHEN** the user changes a selector
 - **THEN** the map, charts, table, legend, current layer, and selected feature are updated according to the new state
 
 #### Scenario: Atualizar estado pelo mapa
-- **WHEN** the user clicks or double-clicks a map geometry
+- **WHEN** the user clicks or double-clicks a map geometry outside information mode
 - **THEN** the corresponding territorial selection and dependent dashboard components are updated
 
 #### Scenario: Limpar selecao ao trocar camada
 - **WHEN** a layer transition invalidates the previously selected feature
 - **THEN** the selected feature display is cleared or replaced with a feature from the newly displayed layer
 
+#### Scenario: Ativar modo de informacoes no mapa
+- **WHEN** the user activates the map information button
+- **THEN** the interface indicates that map information mode is active
+- **AND** the next geometry clicks are interpreted as information requests for the displayed records
+
+#### Scenario: Desativar modo de informacoes no mapa
+- **WHEN** the user deactivates the map information button
+- **THEN** map geometry clicks return to the normal selection behavior
+
 ### Requirement: Graficos sincronizados
-The system SHALL display two charts derived from the records currently represented on the map.
+The system SHALL display chart content derived from the records currently represented on the map and allow users to control the chart record order.
 
 #### Scenario: Graficos para municipios de UF
 - **WHEN** the current layer is municipalities for a selected UF
-- **THEN** both charts represent only those municipalities and the selected indicator context
+- **THEN** the chart represents all municipalities currently displayed on the map and the selected indicator context
 
 #### Scenario: Graficos para setores de municipio
 - **WHEN** the current layer is census sectors for a selected municipality
-- **THEN** both charts represent only those census sectors and the selected indicator context
+- **THEN** the chart represents all census sectors currently displayed on the map and the selected indicator context
 
 #### Scenario: Graficos para municipios de microrregiao
 - **WHEN** the current layer is municipalities for a selected microregion
-- **THEN** both charts represent only municipalities in that microregion and the selected indicator context
+- **THEN** the chart represents all municipalities currently displayed on the map and the selected indicator context
+
+#### Scenario: Grafico com painel fixo e rolagem horizontal
+- **WHEN** the displayed map records exceed the width available in the chart panel
+- **THEN** the chart remains in a fixed-height panel below the map
+- **AND** the user can scroll horizontally to inspect every displayed record without hiding records from the dataset
+
+#### Scenario: Selecionar registro pelo grafico
+- **WHEN** the user clicks a chart bar for a displayed record
+- **THEN** the corresponding map geometry is selected
+- **AND** the map zooms or fits to that geometry extent
+- **AND** the selected feature details use the clicked record and selected indicator context
+
+#### Scenario: Ordenar grafico por maiores valores
+- **WHEN** the chart/table panel displays records for the selected indicator
+- **THEN** records are ordered by the selected indicator value with the largest values first by default
+- **AND** the chart and table use the same ordered record sequence
+
+#### Scenario: Inverter ordem por valor
+- **WHEN** the user activates the order inversion control while value sorting is active
+- **THEN** the chart and table invert between descending and ascending selected indicator value order
+- **AND** the displayed map record set remains unchanged
+
+#### Scenario: Ordenar alfabeticamente
+- **WHEN** the user activates the alphabetical sort control
+- **THEN** the chart and table order records alphabetically by record name
+- **AND** chart/table selection and map zoom behavior continue to target the same displayed records
 
 ### Requirement: Tabela sincronizada
 The system SHALL display a data table containing the records currently represented on the map.
@@ -51,6 +86,10 @@ The system SHALL display a data table containing the records currently represent
 #### Scenario: Colunas selecionaveis permanecem aplicadas
 - **WHEN** the user chooses visible table columns and then changes territory, layer, or indicator
 - **THEN** the table preserves the chosen columns where those indicators are available
+
+#### Scenario: Tabela no painel inferior
+- **WHEN** the dashboard displays the synchronized table and chart
+- **THEN** both are presented in the "Grafico e tabela" area below the map rather than inside the side controls
 
 ### Requirement: Feedback de carregamento
 The system SHALL provide visible loading feedback during static geographic asset reads and indicator metadata reads.
@@ -74,8 +113,12 @@ The system SHALL synchronize map, selectors, charts, table, legend, and selected
 - **WHEN** the user changes UF, microregion, municipality, layer, or indicator while a previous static asset is still loading
 - **THEN** the interface resolves to the latest selected context and does not display stale records from the previous context
 
+#### Scenario: Grafico usa registros carregados atuais
+- **WHEN** static records for the current territorial context are loaded or filtered
+- **THEN** the chart uses the same complete displayed record set as the map and table, including all visible UFs, municipalities, microregions, or census sectors for that context
+
 ### Requirement: Usabilidade do contexto atual
-The system SHALL make the selected territory, current territorial level, active indicator, color meaning, and available back navigation clear to the user.
+The system SHALL make the selected territory, current territorial level, active indicator, color meaning, available back navigation, and map information affordances clear to the user.
 
 #### Scenario: Inspecionar contexto atual
 - **WHEN** the user views the dashboard after any selection change
@@ -84,3 +127,15 @@ The system SHALL make the selected territory, current territorial level, active 
 #### Scenario: Inspecionar geometria selecionada
 - **WHEN** the user selects a UF, microregion, municipality, or census sector on the map
 - **THEN** the dashboard communicates the selected record name, code, and selected indicator value without conflicting with the current layer context
+
+#### Scenario: Relatorio completo por clique no mapa
+- **WHEN** map information mode is active and the user clicks a displayed UF, microregion, municipality, or census sector geometry
+- **THEN** the map opens a popup report for that clicked record
+- **AND** the report includes the record name and territorial context
+- **AND** the report lists all available indicators for that record using the indicator catalog labels and units
+- **AND** the current selected indicator remains identifiable in the report
+
+#### Scenario: Clique fora de geometria em modo de informacoes
+- **WHEN** map information mode is active and the user clicks an area without a displayed geometry
+- **THEN** no indicator report is shown for a non-existent record
+- **AND** the existing displayed map record set remains unchanged

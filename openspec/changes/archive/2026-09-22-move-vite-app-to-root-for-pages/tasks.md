@@ -1,7 +1,7 @@
 ## 1. Move Vite App To Repository Root
 
 - [x] 1.1 Move `frontend/index.html`, `frontend/src/`, `frontend/public/`, `frontend/scripts/`, `frontend/package.json`, package lockfile, `frontend/tsconfig.json`, `frontend/vite.config.ts`, and `frontend/.env.example` to equivalent root-level paths, and verify the root contains `index.html`, `src/main.tsx`, `public/geodata/manifest.json`, and `package.json`.
-- [ ] 1.2 Remove the now-empty or obsolete `frontend/` directory structure, and verify no required source, static asset, or config file remains only under `frontend/`.
+- [x] 1.2 Remove the now-empty or obsolete `frontend/` directory structure, and verify no required source, static asset, or config file remains only under `frontend/`.
 
 ## 2. Update Root Build Configuration
 

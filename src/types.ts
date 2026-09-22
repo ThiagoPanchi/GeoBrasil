@@ -26,6 +26,8 @@ export type ChoroplethBreak = {
   color: string;
 };
 
+export type ColorScale = 'blue' | 'red' | 'green' | 'semaforica';
+
 export type MunicipalityFeatureCollection = GeoJSON.FeatureCollection & {
   metadata?: {
     indicator: string;

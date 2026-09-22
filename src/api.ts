@@ -1,6 +1,7 @@
 import { geojson } from 'flatgeobuf';
 import type {
   ChoroplethBreak,
+  ColorScale,
   Indicator,
   Microregion,
   MunicipalityDetails,
@@ -11,7 +12,14 @@ import type {
   Uf,
 } from './types';
 
-const colorRamp = ['#eff3ff', '#bdd7e7', '#6baed6', '#3182bd', '#08519c'];
+const colorScales: Record<ColorScale, string[]> = {
+  blue: ['#eff3ff', '#bdd7e7', '#6baed6', '#3182bd', '#08519c'],
+  red: ['#fee5d9', '#fcae91', '#fb6a4a', '#de2d26', '#a50f15'],
+  green: ['#edf8e9', '#bae4b3', '#74c476', '#31a354', '#006d2c'],
+  semaforica: ['#1a9850', '#91cf60', '#fee08b', '#fc8d59', '#d73027'],
+};
+
+const defaultColorScale: ColorScale = 'blue';
 let manifestPromise: Promise<StaticAssetManifest> | null = null;
 
 function publicUrl(assetPath: string) {
@@ -87,17 +95,22 @@ export async function getMunicipalitiesByMicroregion(
     .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 }
 
-export async function getStatesGeojson(indicator: string, signal?: AbortSignal): Promise<MunicipalityFeatureCollection> {
+export async function getStatesGeojson(
+  indicator: string,
+  colorScale: ColorScale = defaultColorScale,
+  signal?: AbortSignal,
+): Promise<MunicipalityFeatureCollection> {
   const manifest = await getManifest(signal);
   const features = manifest.assets.ufs.endsWith('.geojson')
     ? await readGeoJson(manifest.assets.ufs, signal)
     : await readFlatGeobuf(manifest.assets.ufs, signal);
-  return styleFeatureCollection(features, indicator, 'ufs');
+  return styleFeatureCollection(features, indicator, 'ufs', colorScale);
 }
 
 export async function getMicroregionsGeojsonByState(
   uf: string,
   indicator: string,
+  colorScale: ColorScale = defaultColorScale,
   signal?: AbortSignal,
 ): Promise<MunicipalityFeatureCollection> {
   const manifest = await getManifest(signal);
@@ -108,12 +121,13 @@ export async function getMicroregionsGeojsonByState(
   }
 
   const features = await readFlatGeobuf(entry.assets.microregions, signal);
-  return styleFeatureCollection(features, indicator, 'microregions');
+  return styleFeatureCollection(features, indicator, 'microregions', colorScale);
 }
 
 export async function getMunicipalitiesByState(
   uf: string,
   indicator: string,
+  colorScale: ColorScale = defaultColorScale,
   microregionId?: string,
   signal?: AbortSignal,
 ): Promise<MunicipalityFeatureCollection> {
@@ -129,12 +143,13 @@ export async function getMunicipalitiesByState(
     ? features.filter((feature) => String(feature.properties?.microregionId ?? feature.properties?.CD_RGI ?? '') === microregionId)
     : features;
 
-  return styleFeatureCollection(filteredFeatures, indicator, 'municipalities');
+  return styleFeatureCollection(filteredFeatures, indicator, 'municipalities', colorScale);
 }
 
 export async function getSectorsByMunicipality(
   municipalityId: string,
   indicator: string,
+  colorScale: ColorScale = defaultColorScale,
   signal?: AbortSignal,
 ): Promise<MunicipalityFeatureCollection> {
   const manifest = await getManifest(signal);
@@ -145,12 +160,13 @@ export async function getSectorsByMunicipality(
   }
 
   const features = await readFlatGeobuf(entry.asset, signal);
-  return styleFeatureCollection(features, indicator, 'sectors');
+  return styleFeatureCollection(features, indicator, 'sectors', colorScale);
 }
 
 export async function getMicroregionMunicipalitiesWithSectors(
   microregionId: string,
   indicator: string,
+  colorScale: ColorScale = defaultColorScale,
   signal?: AbortSignal,
 ): Promise<{ municipalities: MunicipalityFeatureCollection; sectors: MunicipalityFeatureCollection }> {
   const manifest = await getManifest(signal);
@@ -180,8 +196,8 @@ export async function getMicroregionMunicipalitiesWithSectors(
   ).flat();
 
   return {
-    municipalities: styleFeatureCollection(filteredMunicipalities, indicator, 'municipalities'),
-    sectors: styleFeatureCollection(sectorFeatures, indicator, 'sectors'),
+    municipalities: styleFeatureCollection(filteredMunicipalities, indicator, 'municipalities', colorScale),
+    sectors: styleFeatureCollection(sectorFeatures, indicator, 'sectors', colorScale),
   };
 }
 
@@ -206,10 +222,12 @@ function styleFeatureCollection(
   features: GeoJSON.Feature[],
   indicator: string,
   layer: TerritorialLayer,
+  colorScale: ColorScale = defaultColorScale,
 ): MunicipalityFeatureCollection {
+  const colorRamp = colorScales[colorScale] ?? colorScales[defaultColorScale];
   const normalized = features.map((feature) => normalizeFeature(feature, layer));
-  const breaks = buildBreaks(normalized.map((feature) => getIndicatorValue(feature, indicator)));
-  const styledFeatures = normalized.map((feature) => styleFeature(feature, indicator, breaks));
+  const breaks = buildBreaks(normalized.map((feature) => getIndicatorValue(feature, indicator)), colorRamp);
+  const styledFeatures = normalized.map((feature) => styleFeature(feature, indicator, breaks, colorRamp));
 
   return {
     type: 'FeatureCollection',
@@ -244,7 +262,7 @@ function normalizeFeature(feature: GeoJSON.Feature, layer: TerritorialLayer): Ge
       microregionId: String(properties.microregionId ?? properties.CD_RGI ?? ''),
       microregionName: String(properties.microregionName ?? properties.NM_RGI ?? ''),
       indicatorValue: 0,
-      fillColor: colorRamp[0],
+      fillColor: colorScales[defaultColorScale][0],
     },
   };
 }
@@ -265,11 +283,17 @@ function normalizeIndicators(indicators: unknown, properties: GeoJSON.GeoJsonPro
     ethnicity_race: toNumber(properties?.v0004),
     gender_sex: toNumber(properties?.v0005),
     age_group: toNumber(properties?.v0006),
-    income: toNumber(properties?.v0007),
+    responsible_persons: toNumber(properties?.v0007),
+    income: toNumber(properties?.V06004),
   };
 }
 
-function styleFeature(feature: GeoJSON.Feature, indicator: string, breaks: ChoroplethBreak[]): GeoJSON.Feature {
+function styleFeature(
+  feature: GeoJSON.Feature,
+  indicator: string,
+  breaks: ChoroplethBreak[],
+  colorRamp: string[],
+): GeoJSON.Feature {
   const value = getIndicatorValue(feature, indicator);
   const color = breaks.find((item) => item.min <= value && value <= item.max)?.color ?? colorRamp[0];
 
@@ -288,26 +312,32 @@ function getIndicatorValue(feature: GeoJSON.Feature, indicator: string) {
   return toNumber(indicators[indicator]);
 }
 
-function buildBreaks(values: number[]): ChoroplethBreak[] {
-  const validValues = values.filter((value) => Number.isFinite(value));
+function buildBreaks(values: number[], colorRamp: string[]): ChoroplethBreak[] {
+  const validValues = values.filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
 
   if (validValues.length === 0) {
     return [];
   }
 
-  const min = Math.min(...validValues);
-  const max = Math.max(...validValues);
+  const min = validValues[0];
+  const max = validValues[validValues.length - 1];
 
   if (min === max) {
     return [{ min, max, color: colorRamp[colorRamp.length - 1] }];
   }
 
-  const step = (max - min) / colorRamp.length;
-  return colorRamp.map((color, index) => ({
-    min: index === 0 ? min : min + step * index,
-    max: index === colorRamp.length - 1 ? max : min + step * (index + 1),
-    color,
-  }));
+  const classCount = Math.min(colorRamp.length, validValues.length);
+
+  return Array.from({ length: classCount }, (_, index) => {
+    const start = Math.floor((index * validValues.length) / classCount);
+    const end = Math.max(start, Math.floor(((index + 1) * validValues.length) / classCount) - 1);
+
+    return {
+      min: validValues[start],
+      max: validValues[index === classCount - 1 ? validValues.length - 1 : end],
+      color: colorRamp[index],
+    };
+  }).filter((item, index, items) => index === 0 || item.min !== items[index - 1].min || item.max !== items[index - 1].max);
 }
 
 function calculateBbox(features: GeoJSON.Feature[]): [[number, number], [number, number]] {
@@ -399,6 +429,8 @@ function parseIndicators(value: unknown): Record<string, number> {
 }
 
 function toNumber(value: unknown) {
-  const parsed = Number(value);
+  const text = String(value ?? '').trim();
+  const normalized = text.includes(',') ? text.replace(/\./g, '').replace(',', '.') : text;
+  const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 }
