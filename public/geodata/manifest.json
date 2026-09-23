@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-22T22:35:54.905Z",
+  "generatedAt": "2026-09-23T12:17:12.115Z",
   "assets": {
     "ufs": "geodata/ufs.fgb"
   },
@@ -28,6 +28,41 @@
       "id": "income",
       "name": "Renda media mensal dos responsaveis",
       "unit": "R$"
+    },
+    {
+      "id": "men",
+      "name": "Quantidade de homens",
+      "unit": "pessoas"
+    },
+    {
+      "id": "women",
+      "name": "Quantidade de mulheres",
+      "unit": "pessoas"
+    },
+    {
+      "id": "race_white",
+      "name": "Cor ou raca branca",
+      "unit": "pessoas"
+    },
+    {
+      "id": "race_black",
+      "name": "Cor ou raca preta",
+      "unit": "pessoas"
+    },
+    {
+      "id": "race_yellow",
+      "name": "Cor ou raca amarela",
+      "unit": "pessoas"
+    },
+    {
+      "id": "race_brown",
+      "name": "Cor ou raca parda",
+      "unit": "pessoas"
+    },
+    {
+      "id": "race_indigenous",
+      "name": "Cor ou raca indigena",
+      "unit": "pessoas"
     }
   ],
   "ufs": [

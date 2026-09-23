@@ -18,6 +18,7 @@ export type MunicipalityDetails = {
   microregionId?: string;
   microregionName?: string;
   indicators: Record<string, number>;
+  reportAttributes?: Record<string, string | number>;
 };
 
 export type ChoroplethBreak = {

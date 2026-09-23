@@ -248,6 +248,7 @@ function normalizeFeature(feature: GeoJSON.Feature, layer: TerritorialLayer): Ge
   const name = String(properties.name ?? properties.NM_MUN ?? properties.NM_RGI ?? properties.NM_UF ?? id);
   const uf = String(properties.uf ?? properties.SIGLA_UF ?? '');
   const indicators = normalizeIndicators(properties.indicators, properties);
+  const reportAttributes = normalizeReportAttributes(properties.reportAttributes, properties);
 
   return {
     ...feature,
@@ -261,6 +262,7 @@ function normalizeFeature(feature: GeoJSON.Feature, layer: TerritorialLayer): Ge
       municipalityName: String(properties.municipalityName ?? properties.NM_MUN ?? name),
       microregionId: String(properties.microregionId ?? properties.CD_RGI ?? ''),
       microregionName: String(properties.microregionName ?? properties.NM_RGI ?? ''),
+      reportAttributes,
       indicatorValue: 0,
       fillColor: colorScales[defaultColorScale][0],
     },
@@ -281,7 +283,32 @@ function normalizeIndicators(indicators: unknown, properties: GeoJSON.GeoJsonPro
     households: toNumber(properties?.v0002),
     responsible_persons: toNumber(properties?.v0007),
     income: toNumber(properties?.V06004),
+    men: toNumber(properties?.V01007),
+    women: toNumber(properties?.V01008),
+    race_white: toNumber(properties?.V01317),
+    race_black: toNumber(properties?.V01318),
+    race_yellow: toNumber(properties?.V01319),
+    race_brown: toNumber(properties?.V01320),
+    race_indigenous: toNumber(properties?.V01321),
   };
+}
+
+function normalizeReportAttributes(reportAttributes: unknown, properties: GeoJSON.GeoJsonProperties): Record<string, string | number> | undefined {
+  const source = reportAttributes && typeof reportAttributes === 'object'
+    ? reportAttributes as Record<string, unknown>
+    : {
+        SITUACAO: properties?.SITUACAO,
+        AREA_KM2: properties?.AREA_KM2,
+        NM_DIST: properties?.NM_DIST,
+        NM_BAIRRO: properties?.NM_BAIRRO,
+      };
+  const normalized = Object.fromEntries(
+    Object.entries(source)
+      .map(([key, value]) => [key, key === 'AREA_KM2' ? toNumber(value) : String(value ?? '').trim()])
+      .filter(([, value]) => value !== '' && value !== 0),
+  ) as Record<string, string | number>;
+
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
 }
 
 function styleFeature(
@@ -405,6 +432,7 @@ function featureToDetails(feature: GeoJSON.Feature, layer: TerritorialLayer): Mu
     microregionId: String(properties.microregionId ?? ''),
     microregionName: String(properties.microregionName ?? ''),
     indicators: parseIndicators(properties.indicators),
+    reportAttributes: parseReportAttributes(properties.reportAttributes),
   };
 }
 
@@ -422,6 +450,28 @@ function parseIndicators(value: unknown): Record<string, number> {
   }
 
   return {};
+}
+
+function parseReportAttributes(value: unknown): Record<string, string | number> | undefined {
+  if (typeof value === 'string') {
+    try {
+      return parseReportAttributes(JSON.parse(value));
+    } catch {
+      return undefined;
+    }
+  }
+
+  if (!value || typeof value !== 'object') {
+    return undefined;
+  }
+
+  const parsed = Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .map(([key, item]) => [key, typeof item === 'number' ? item : String(item ?? '').trim()])
+      .filter(([, item]) => item !== '' && item !== 0),
+  ) as Record<string, string | number>;
+
+  return Object.keys(parsed).length > 0 ? parsed : undefined;
 }
 
 function toNumber(value: unknown) {

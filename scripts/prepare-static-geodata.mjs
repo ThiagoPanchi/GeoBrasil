@@ -10,6 +10,8 @@ const root = path.resolve(__dirname, '..');
 const sourceDir = path.join(root, 'data', 'FlatGeoBuf');
 const outputDir = path.join(root, 'public', 'geodata');
 const incomeAggregateSource = path.join(root, 'data', 'Agregados_por_setores_renda_responsavel_BR_20260508_csv.zip');
+const demographicAggregateSource = path.join(root, 'data', 'Agregados_por_setores_demografia_BR.zip');
+const colorRaceAggregateSource = path.join(root, 'data', 'Agregados_por_setores_cor_ou_raca_BR.zip');
 
 const sources = {
   ufs: path.join(sourceDir, 'BR_UF_2025_simp.fgb'),
@@ -24,10 +26,30 @@ const indicators = [
   { id: 'households', name: 'Domicilios', unit: 'domicilios', property: 'v0002' },
   { id: 'responsible_persons', name: 'Pessoas responsaveis em domicilios particulares', unit: 'pessoas', property: 'v0007' },
   { id: 'income', name: 'Renda media mensal dos responsaveis', unit: 'R$', property: 'V06004' },
+  { id: 'men', name: 'Quantidade de homens', unit: 'pessoas', property: 'V01007' },
+  { id: 'women', name: 'Quantidade de mulheres', unit: 'pessoas', property: 'V01008' },
+  { id: 'race_white', name: 'Cor ou raca branca', unit: 'pessoas', property: 'V01317' },
+  { id: 'race_black', name: 'Cor ou raca preta', unit: 'pessoas', property: 'V01318' },
+  { id: 'race_yellow', name: 'Cor ou raca amarela', unit: 'pessoas', property: 'V01319' },
+  { id: 'race_brown', name: 'Cor ou raca parda', unit: 'pessoas', property: 'V01320' },
+  { id: 'race_indigenous', name: 'Cor ou raca indigena', unit: 'pessoas', property: 'V01321' },
 ];
 
+const sexAggregateColumns = {
+  men: 'V01007',
+  women: 'V01008',
+};
+
+const colorRaceAggregateColumns = {
+  race_white: 'V01317',
+  race_black: 'V01318',
+  race_yellow: 'V01319',
+  race_brown: 'V01320',
+  race_indigenous: 'V01321',
+};
+
 function requireSources() {
-  const missing = [...Object.values(sources), incomeAggregateSource].filter((file) => !existsSync(file));
+  const missing = [...Object.values(sources), incomeAggregateSource, demographicAggregateSource, colorRaceAggregateSource].filter((file) => !existsSync(file));
 
   if (missing.length > 0) {
     throw new Error(`Required geodata source files are missing:\n${missing.map((file) => `- ${file}`).join('\n')}`);
@@ -42,7 +64,7 @@ function readUInt16(buffer, offset) {
   return buffer.readUInt16LE(offset);
 }
 
-function extractFirstCsvFromZip(buffer) {
+function extractFirstCsvFromZip(buffer, zipPath) {
   const eocdSignature = 0x06054b50;
   let eocdOffset = -1;
 
@@ -54,7 +76,7 @@ function extractFirstCsvFromZip(buffer) {
   }
 
   if (eocdOffset < 0) {
-    throw new Error(`Invalid ZIP file: ${incomeAggregateSource}`);
+    throw new Error(`Invalid ZIP file: ${zipPath}`);
   }
 
   const centralDirectorySize = readUInt32(buffer, eocdOffset + 12);
@@ -63,7 +85,7 @@ function extractFirstCsvFromZip(buffer) {
 
   while (offset < centralDirectoryOffset + centralDirectorySize) {
     if (readUInt32(buffer, offset) !== 0x02014b50) {
-      throw new Error(`Invalid ZIP central directory in ${incomeAggregateSource}`);
+      throw new Error(`Invalid ZIP central directory in ${zipPath}`);
     }
 
     const compressionMethod = readUInt16(buffer, offset + 10);
@@ -95,7 +117,7 @@ function extractFirstCsvFromZip(buffer) {
     offset += 46 + fileNameLength + extraLength + commentLength;
   }
 
-  throw new Error(`No CSV file found in ${incomeAggregateSource}`);
+  throw new Error(`No CSV file found in ${zipPath}`);
 }
 
 function detectDelimiter(headerLine) {
@@ -156,7 +178,7 @@ function findColumn(headers, candidates) {
 }
 
 async function readIncomeBySector() {
-  const csv = extractFirstCsvFromZip(await readFile(incomeAggregateSource));
+  const csv = extractFirstCsvFromZip(await readFile(incomeAggregateSource), incomeAggregateSource);
   const lines = csv.split(/\r?\n/).filter((line) => line.trim().length > 0);
 
   if (lines.length < 2) {
@@ -185,6 +207,45 @@ async function readIncomeBySector() {
 
   console.log(`Income aggregate rows loaded: ${incomeBySector.size}`);
   return incomeBySector;
+}
+
+async function readAggregateValuesBySector(sourcePath, columnsByIndicator, label) {
+  const csv = extractFirstCsvFromZip(await readFile(sourcePath), sourcePath);
+  const lines = csv.split(/\r?\n/).filter((line) => line.trim().length > 0);
+
+  if (lines.length < 2) {
+    throw new Error(`${label} aggregate CSV has no data rows: ${sourcePath}`);
+  }
+
+  const delimiter = detectDelimiter(lines[0]);
+  const headers = parseDelimitedLine(lines[0], delimiter);
+  const sectorIndex = findColumn(headers, ['CD_SETOR', 'CD_setor', 'cd_setor', 'Cod_setor', 'cod_setor', 'setor']);
+  const columnIndexes = Object.fromEntries(
+    Object.entries(columnsByIndicator).map(([indicatorId, column]) => [indicatorId, findColumn(headers, [column, column.toLowerCase()])]),
+  );
+  const missingColumns = Object.entries(columnIndexes).filter(([, index]) => index < 0).map(([indicatorId]) => columnsByIndicator[indicatorId]);
+
+  if (sectorIndex < 0 || missingColumns.length > 0) {
+    throw new Error(`${label} aggregate CSV must contain sector identifier and columns: ${Object.values(columnsByIndicator).join(', ')}. Found: ${headers.join(', ')}`);
+  }
+
+  const valuesBySector = new Map();
+
+  for (const line of lines.slice(1)) {
+    const row = parseDelimitedLine(line, delimiter);
+    const sectorId = String(row[sectorIndex] ?? '').trim();
+
+    if (!sectorId) {
+      continue;
+    }
+
+    valuesBySector.set(sectorId, Object.fromEntries(
+      Object.entries(columnIndexes).map(([indicatorId, columnIndex]) => [indicatorId, parseLocalizedNumber(row[columnIndex])]),
+    ));
+  }
+
+  console.log(`${label} aggregate rows loaded: ${valuesBySector.size}`);
+  return valuesBySector;
 }
 
 async function readFlatGeobuf(file) {
@@ -262,10 +323,12 @@ function getNumber(value) {
   return parseLocalizedNumber(value);
 }
 
-function sectorIndicators(properties, incomeBySector) {
+function sectorIndicators(properties, incomeBySector, sexBySector, colorRaceBySector) {
   const population = getNumber(properties.v0001);
   const area = getNumber(properties.AREA_KM2);
   const sectorId = String(properties.CD_SETOR ?? '');
+  const sexValues = sexBySector.get(sectorId) ?? {};
+  const colorRaceValues = colorRaceBySector.get(sectorId) ?? {};
 
   return {
     population,
@@ -273,6 +336,8 @@ function sectorIndicators(properties, incomeBySector) {
     households: getNumber(properties.v0002),
     responsible_persons: getNumber(properties.v0007),
     income: getNumber(incomeBySector.get(sectorId)),
+    ...sexValues,
+    ...colorRaceValues,
   };
 }
 
@@ -300,9 +365,9 @@ function finalizeIncome(target) {
   delete target.incomeWeight;
 }
 
-function normalizeSector(feature, incomeBySector) {
+function normalizeSector(feature, incomeBySector, sexBySector, colorRaceBySector) {
   const properties = feature.properties ?? {};
-  const indicatorsValue = sectorIndicators(properties, incomeBySector);
+  const indicatorsValue = sectorIndicators(properties, incomeBySector, sexBySector, colorRaceBySector);
 
   return {
     ...feature,
@@ -317,6 +382,12 @@ function normalizeSector(feature, incomeBySector) {
       microregionId: String(properties.CD_RGI ?? ''),
       microregionName: String(properties.NM_RGI ?? ''),
       level: 'sector',
+      reportAttributes: {
+        SITUACAO: String(properties.SITUACAO ?? ''),
+        AREA_KM2: getNumber(properties.AREA_KM2),
+        NM_DIST: String(properties.NM_DIST ?? ''),
+        NM_BAIRRO: String(properties.NM_BAIRRO ?? ''),
+      },
       indicators: indicatorsValue,
     },
   };
@@ -410,6 +481,8 @@ function emptyAggregate() {
 async function main() {
   requireSources();
   const incomeBySector = await readIncomeBySector();
+  const sexBySector = await readAggregateValuesBySector(demographicAggregateSource, sexAggregateColumns, 'Demographic');
+  const colorRaceBySector = await readAggregateValuesBySector(colorRaceAggregateSource, colorRaceAggregateColumns, 'Color/race');
   await rm(outputDir, { recursive: true, force: true });
   await mkdir(outputDir, { recursive: true });
 
@@ -420,7 +493,7 @@ async function main() {
   const ufAggregates = new Map();
 
   for (const feature of await readFlatGeobuf(sources.sectors)) {
-    const normalized = normalizeSector(feature, incomeBySector);
+    const normalized = normalizeSector(feature, incomeBySector, sexBySector, colorRaceBySector);
     const props = normalized.properties;
     const values = props.indicators;
     const municipalityId = props.municipalityId;

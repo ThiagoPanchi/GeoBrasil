@@ -306,6 +306,7 @@ export function MapView({
       microregionId: String(properties.microregionId ?? ''),
       microregionName: String(properties.microregionName ?? ''),
       indicators: parseIndicators(properties.indicators),
+      reportAttributes: parseReportAttributes(properties.reportAttributes),
     };
   }
 
@@ -419,6 +420,28 @@ function parseIndicators(value: unknown): Record<string, number> {
   }
 
   return value && typeof value === 'object' ? (value as Record<string, number>) : {};
+}
+
+function parseReportAttributes(value: unknown): Record<string, string | number> | undefined {
+  if (typeof value === 'string') {
+    try {
+      return parseReportAttributes(JSON.parse(value));
+    } catch {
+      return undefined;
+    }
+  }
+
+  if (!value || typeof value !== 'object') {
+    return undefined;
+  }
+
+  const parsed = Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .map(([key, item]) => [key, typeof item === 'number' ? item : String(item ?? '').trim()])
+      .filter(([, item]) => item !== '' && item !== 0),
+  ) as Record<string, string | number>;
+
+  return Object.keys(parsed).length > 0 ? parsed : undefined;
 }
 
 function successMessage(layer: TerritorialLayer, count: number) {
