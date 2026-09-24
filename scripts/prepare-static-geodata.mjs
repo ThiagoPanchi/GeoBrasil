@@ -13,6 +13,36 @@ const incomeAggregateSource = path.join(root, 'data', 'Agregados_por_setores_ren
 const demographicAggregateSource = path.join(root, 'data', 'Agregados_por_setores_demografia_BR.zip');
 const colorRaceAggregateSource = path.join(root, 'data', 'Agregados_por_setores_cor_ou_raca_BR.zip');
 
+const ufByIbgeCode = new Map(Object.entries({
+  11: 'RO',
+  12: 'AC',
+  13: 'AM',
+  14: 'RR',
+  15: 'PA',
+  16: 'AP',
+  17: 'TO',
+  21: 'MA',
+  22: 'PI',
+  23: 'CE',
+  24: 'RN',
+  25: 'PB',
+  26: 'PE',
+  27: 'AL',
+  28: 'SE',
+  29: 'BA',
+  31: 'MG',
+  32: 'ES',
+  33: 'RJ',
+  35: 'SP',
+  41: 'PR',
+  42: 'SC',
+  43: 'RS',
+  50: 'MS',
+  51: 'MT',
+  52: 'GO',
+  53: 'DF',
+}));
+
 const sources = {
   ufs: path.join(sourceDir, 'BR_UF_2025_simp.fgb'),
   municipalities: path.join(sourceDir, 'BR_Municipios_2025_simp.fgb'),
@@ -54,6 +84,17 @@ function requireSources() {
   if (missing.length > 0) {
     throw new Error(`Required geodata source files are missing:\n${missing.map((file) => `- ${file}`).join('\n')}`);
   }
+}
+
+function ufFromMunicipalityId(municipalityId) {
+  const ufCode = String(municipalityId ?? '').slice(0, 2);
+  const uf = ufByIbgeCode.get(ufCode);
+
+  if (!uf) {
+    throw new Error(`Unknown IBGE UF code '${ufCode}' for municipality '${municipalityId}'`);
+  }
+
+  return uf;
 }
 
 function readUInt32(buffer, offset) {
@@ -527,7 +568,7 @@ async function main() {
       ibgeCode: feature.properties.ufCode,
       name: feature.properties.name,
       assets: {
-        municipalities: `geodata/municipalities/${feature.properties.code}.fgb`,
+        municipalities: `geodata/municipalities/${feature.properties.code}/${feature.properties.code}.fgb`,
         microregions: `geodata/microregions/${feature.properties.code}.fgb`,
       },
     }))
@@ -540,7 +581,7 @@ async function main() {
       uf: feature.properties.uf,
       ufCode: feature.properties.ufCode,
       microregionId: feature.properties.microregionId,
-      asset: `geodata/sectors/${feature.properties.id}.fgb`,
+      asset: `geodata/sectors/${ufFromMunicipalityId(feature.properties.id)}/${feature.properties.id}.fgb`,
     }))
     .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
@@ -558,12 +599,12 @@ async function main() {
   await writeGeoJson('ufs.geojson', simplifyFeatures(ufFeatures, 450));
 
   for (const uf of ufs) {
-    await writeFlatGeobuf(`municipalities/${uf.code}.fgb`, municipalityFeatures.filter((feature) => feature.properties.uf === uf.code));
+    await writeFlatGeobuf(`municipalities/${uf.code}/${uf.code}.fgb`, municipalityFeatures.filter((feature) => feature.properties.uf === uf.code));
     await writeFlatGeobuf(`microregions/${uf.code}.fgb`, microregionFeatures.filter((feature) => feature.properties.uf === uf.code));
   }
 
   for (const municipality of municipalities) {
-    await writeFlatGeobuf(`sectors/${municipality.id}.fgb`, sectorsByMunicipality.get(municipality.id) ?? []);
+    await writeFlatGeobuf(`sectors/${ufFromMunicipalityId(municipality.id)}/${municipality.id}.fgb`, sectorsByMunicipality.get(municipality.id) ?? []);
   }
 
   const manifest = {

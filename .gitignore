@@ -1,6 +1,18 @@
 # Dados locais
 data/
 
+# Geodata gerado: versionar somente assets de Santa Catarina por padrao
+public/geodata/municipalities/*
+!public/geodata/municipalities/SC/
+!public/geodata/municipalities/SC/**
+public/geodata/sectors/*
+!public/geodata/sectors/SC/
+!public/geodata/sectors/SC/**
+public/geodata/cnefe-aggregated/*
+!public/geodata/cnefe-aggregated/manifest.json
+!public/geodata/cnefe-aggregated/SC/
+!public/geodata/cnefe-aggregated/SC/**
+
 # Python
 __pycache__/
 *.py[cod]

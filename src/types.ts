@@ -39,6 +39,23 @@ export type MunicipalityFeatureCollection = GeoJSON.FeatureCollection & {
   };
 };
 
+export type CnefeAddressProperties = {
+  COD_MUNICIPIO: string;
+  COD_SETOR: string;
+  ENDERECO_COMPLETO?: string;
+  DSC_ESTABELECIMENTO?: string;
+  ESPECIE_ENDERECO: string;
+  QUANTIDADE: number;
+  [key: string]: string | number | undefined;
+};
+
+export type CnefeAddressFeature = GeoJSON.Feature<GeoJSON.Point, CnefeAddressProperties>;
+
+export type CnefeAggregatedManifest = {
+  generatedAt: string;
+  municipalities: Record<string, { files: string[] }>;
+};
+
 export type TerritorialLayer = 'ufs' | 'microregions' | 'municipalities' | 'sectors';
 
 export type Microregion = {

@@ -1,6 +1,9 @@
 import { geojson } from 'flatgeobuf';
 import type {
   ChoroplethBreak,
+  CnefeAddressFeature,
+  CnefeAddressProperties,
+  CnefeAggregatedManifest,
   ColorScale,
   Indicator,
   Microregion,
@@ -21,6 +24,7 @@ const colorScales: Record<ColorScale, string[]> = {
 
 const defaultColorScale: ColorScale = 'blue';
 let manifestPromise: Promise<StaticAssetManifest> | null = null;
+let cnefeManifestPromise: Promise<CnefeAggregatedManifest> | null = null;
 
 function publicUrl(assetPath: string) {
   const base = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
@@ -50,6 +54,16 @@ export async function getManifest(signal?: AbortSignal): Promise<StaticAssetMani
   }
 
   return manifestPromise;
+}
+
+export async function getCnefeAggregatedManifest(signal?: AbortSignal): Promise<CnefeAggregatedManifest> {
+  cnefeManifestPromise ??= fetchJson<CnefeAggregatedManifest>('geodata/cnefe-aggregated/manifest.json');
+
+  if (signal?.aborted) {
+    throw new DOMException('Request aborted', 'AbortError');
+  }
+
+  return cnefeManifestPromise;
 }
 
 async function readFlatGeobuf(assetPath: string, signal?: AbortSignal): Promise<GeoJSON.Feature[]> {
@@ -163,6 +177,27 @@ export async function getSectorsByMunicipality(
   return styleFeatureCollection(features, indicator, 'sectors', colorScale);
 }
 
+export async function getCnefePointsBySector(
+  municipalityId: string,
+  sectorId: string,
+  signal?: AbortSignal,
+): Promise<CnefeAddressFeature[]> {
+  const manifest = await getCnefeAggregatedManifest(signal);
+  const files = manifest.municipalities[municipalityId]?.files ?? [];
+
+  if (files.length === 0) {
+    throw new Error(`CNEFE agregado indisponivel para o municipio ${municipalityId}.`);
+  }
+
+  const features = (await Promise.all(files.map((file) => readFlatGeobuf(file, signal)))).flat();
+  const normalizedSectorId = sectorCodePrefix(sectorId);
+
+  return features
+    .filter((feature) => sectorCodePrefix(feature.properties?.COD_SETOR) === normalizedSectorId)
+    .filter((feature): feature is CnefeAddressFeature => feature.geometry?.type === 'Point')
+    .map(normalizeCnefeFeature);
+}
+
 export async function getMicroregionMunicipalitiesWithSectors(
   microregionId: string,
   indicator: string,
@@ -267,6 +302,26 @@ function normalizeFeature(feature: GeoJSON.Feature, layer: TerritorialLayer): Ge
       fillColor: colorScales[defaultColorScale][0],
     },
   };
+}
+
+function normalizeCnefeFeature(feature: CnefeAddressFeature): CnefeAddressFeature {
+  const properties = feature.properties ?? {} as CnefeAddressProperties;
+  const quantidade = Math.max(1, toNumber(properties.QUANTIDADE) || 1);
+
+  return {
+    ...feature,
+    properties: {
+      ...properties,
+      COD_MUNICIPIO: String(properties.COD_MUNICIPIO ?? ''),
+      COD_SETOR: String(properties.COD_SETOR ?? ''),
+      ESPECIE_ENDERECO: String(properties.ESPECIE_ENDERECO ?? 'Nao informado'),
+      QUANTIDADE: quantidade,
+    },
+  };
+}
+
+function sectorCodePrefix(value: unknown) {
+  return String(value ?? '').replace(/\D/g, '').slice(0, 15);
 }
 
 function normalizeIndicators(indicators: unknown, properties: GeoJSON.GeoJsonProperties): Record<string, number> {

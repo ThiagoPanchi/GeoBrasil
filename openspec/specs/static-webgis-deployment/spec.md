@@ -85,3 +85,22 @@ The system SHALL support GitHub Pages configured to publish from the repository 
 - **WHEN** the application is served from the GitHub Pages repository URL
 - **THEN** static asset URLs resolve under the repository base path
 - **AND** territorial assets can still be resolved from the generated static geodata manifest
+
+### Requirement: Informacoes publicas de contato e fontes
+The static WebGIS SHALL display creator contact information and data-source attribution in the application UI.
+
+#### Scenario: Mostrar autoria e contato
+- **WHEN** the application loads
+- **THEN** a lower-left information area identifies the application creator as Thiago Panchiniak
+- **AND** it includes a link to `https://www.linkedin.com/in/thiago-panchiniak-65b63055/`
+- **AND** it includes the email address `panchiniak@gmail.com`
+
+#### Scenario: Mostrar fontes dos dados
+- **WHEN** the application loads
+- **THEN** the lower-left information area identifies the data source as IBGE Censo 2022
+- **AND** the information remains visible without blocking the main map controls or legend
+
+#### Scenario: Responsividade das informacoes
+- **WHEN** the application is viewed on a small screen
+- **THEN** the contact/source information remains reachable and readable
+- **AND** it does not prevent map interaction, layer selection, or dashboard viewing

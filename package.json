@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "prepare:geodata": "node scripts/prepare-static-geodata.mjs",
+    "prepare:cnefe": "node scripts/prepare-cnefe-geodata.mjs",
+    "aggregate:cnefe": "node scripts/aggregate-cnefe-geodata.mjs",
     "build": "vite build",
     "build:static": "npm run prepare:geodata && vite build",
     "preview": "vite preview",

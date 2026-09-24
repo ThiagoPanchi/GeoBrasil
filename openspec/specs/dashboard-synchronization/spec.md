@@ -159,6 +159,13 @@ The system SHALL make the selected territory, current territorial level, active 
 - **AND** each chart communicates category labels and values sufficiently for users to understand the distribution
 - **AND** chart legends remain readable without horizontally squashing labels or values when the popup has sufficient width
 
+#### Scenario: Relatorio com graficos demograficos zerados
+- **WHEN** map information mode is active and the clicked census sector has sex or color/race indicator values whose group total is zero
+- **THEN** the popup report presents the corresponding demographic chart card as a zero-data chart state instead of omitting it
+- **AND** the sex or color/race indicators represented by that zero-data chart are not listed as individual generic indicator rows
+- **AND** the zero-data chart communicates that the group total is zero while preserving the category labels and zero values
+- **AND** demographic chart groups with positive totals continue to render as proportional pie charts
+
 #### Scenario: Relatorio de setor censitario com atributos da fonte
 - **WHEN** map information mode is active and the user clicks a displayed census sector geometry
 - **THEN** the popup report includes the sector attributes `SITUACAO`, `AREA_KM2`, `NM_DIST`, and `NM_BAIRRO` when present in `data/FlatGeoBuf/BR_setores_CD2022_simp.fgb`
