@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { createRoot, Root } from 'react-dom/client';
 import L from 'leaflet';
 import {
   getCnefePointsBySector,
@@ -91,10 +90,8 @@ export function MapView({
   const mapRef = useRef<L.Map | null>(null);
   const layerGroupRef = useRef<L.LayerGroup | null>(null);
   const cnefeLayerGroupRef = useRef<L.LayerGroup | null>(null);
-  const popupRootRef = useRef<Root | null>(null);
   const activeRequestRef = useRef(0);
   const activeCnefeRequestRef = useRef(0);
-  const indicatorsRef = useRef(indicators);
   const infoModeRef = useRef(false);
   const cnefeModeRef = useRef(false);
   const featureByKeyRef = useRef(new Map<string, GeoJSON.Feature>());
@@ -106,13 +103,14 @@ export function MapView({
   const [cnefeSpeciesFilter, setCnefeSpeciesFilter] = useState<CnefeSpeciesFilter>('all');
   const [cnefePoints, setCnefePoints] = useState<CnefeAddressFeature[]>([]);
   const [cnefeSectorName, setCnefeSectorName] = useState('');
-
-  useEffect(() => {
-    indicatorsRef.current = indicators;
-  }, [indicators]);
+  const [activeReportFeature, setActiveReportFeature] = useState<MunicipalityDetails | null>(null);
 
   useEffect(() => {
     infoModeRef.current = infoMode;
+
+    if (!infoMode) {
+      setActiveReportFeature(null);
+    }
   }, [infoMode]);
 
   useEffect(() => {
@@ -159,6 +157,10 @@ export function MapView({
   }, [selectedUf, selectedMicroregion, selectedMunicipalityId, currentLayer]);
 
   useEffect(() => {
+    setActiveReportFeature(null);
+  }, [selectedUf, selectedMicroregion, selectedMunicipalityId, currentLayer, selectedIndicator]);
+
+  useEffect(() => {
     if (!mapContainer.current || mapRef.current) {
       return;
     }
@@ -184,7 +186,6 @@ export function MapView({
 
     return () => {
       window.clearTimeout(resizeHandle);
-      popupRootRef.current?.unmount();
       map.remove();
       mapRef.current = null;
       layerGroupRef.current = null;
@@ -224,6 +225,7 @@ export function MapView({
         onRowsChange(rows);
         if (contextChanged) {
           onFeatureSelect(null);
+          setActiveReportFeature(null);
         }
 
         const bounds = renderedLayers.reduce<L.LatLngBounds | null>((current, layer) => {
@@ -319,12 +321,11 @@ export function MapView({
     }
 
     if (infoModeRef.current) {
-      openFeaturePopup(feature, details, false, true);
+      setActiveReportFeature(details);
       return;
     }
 
     onFeatureSelect(details);
-    openFeaturePopup(feature, details);
   }
 
   async function loadCnefeForSector(details: MunicipalityDetails) {
@@ -398,10 +399,10 @@ export function MapView({
     }
 
     onFeatureSelect(details);
-    openFeaturePopup(feature, details, true);
+    fitFeature(feature);
   }
 
-  function openFeaturePopup(feature: GeoJSON.Feature, details: MunicipalityDetails, fit = false, report = false) {
+  function fitFeature(feature: GeoJSON.Feature) {
     const map = mapRef.current;
     const bounds = L.geoJSON(feature).getBounds();
 
@@ -409,18 +410,7 @@ export function MapView({
       return;
     }
 
-    popupRootRef.current?.unmount();
-    const popupContainer = document.createElement('div');
-    popupRootRef.current = createRoot(popupContainer);
-    popupRootRef.current.render(
-      <MunicipalityPopup feature={details} indicators={indicatorsRef.current} selectedIndicator={selectedIndicator} report={report} />,
-    );
-
-    if (fit) {
-      map.fitBounds(bounds.pad(0.18), { maxZoom: 12 });
-    }
-
-    L.popup().setLatLng(bounds.getCenter()).setContent(popupContainer).openOn(map);
+    map.fitBounds(bounds.pad(0.18), { maxZoom: 12 });
   }
 
   function handleFeatureDoubleClick(feature: GeoJSON.Feature) {
@@ -567,12 +557,11 @@ export function MapView({
           </div>
         ) : null}
       </aside>
-      <aside className="map-attribution-card" aria-label="Informacoes de contato e fontes">
-        <strong>Criado por Thiago Panchiniak</strong>
-        <a href="https://www.linkedin.com/in/thiago-panchiniak-65b63055/" target="_blank" rel="noreferrer">LinkedIn</a>
-        <a href="mailto:panchiniak@gmail.com">panchiniak@gmail.com</a>
-        <span>Fontes: IBGE, Censo 2022.</span>
-      </aside>
+      {activeReportFeature ? (
+        <aside className="map-report-panel" aria-label="Relatorio de indicadores">
+          <MunicipalityPopup feature={activeReportFeature} indicators={indicators} selectedIndicator={selectedIndicator} report />
+        </aside>
+      ) : null}
     </section>
   );
 }

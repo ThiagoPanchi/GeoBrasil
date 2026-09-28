@@ -153,40 +153,49 @@ export function MapPage() {
   return (
     <main className="app-shell">
       <aside className="sidebar">
-        <header>
-          <span className="eyebrow">GeoBrasil Portfolio</span>
-          <h1>Censo e territorio</h1>
-          <p>WebGIS estatico publicado com assets FlatGeobuf carregados conforme a selecao.</p>
-        </header>
+        <div className="sidebar-content">
+          <header>
+            <span className="eyebrow">GeoBrasil Portfolio</span>
+            <h1>Censo e territorio</h1>
+            <p>WebGIS estatico publicado com assets FlatGeobuf carregados conforme a selecao.</p>
+          </header>
 
-        <LayerControl
-          ufs={ufs}
-          microregions={microregions}
-          municipalities={municipalities}
-          selectedUf={selectedUf}
-          selectedMicroregion={selectedMicroregion}
-          selectedMunicipalityId={selectedMunicipalityId}
-          currentLayer={currentLayer}
-          onUfChange={handleUfChange}
-          onMicroregionChange={handleMicroregionChange}
-          onMunicipalityChange={handleMunicipalityChange}
-          onLayerChange={handleLayerChange}
-          onBack={handleBack}
-        />
+          <LayerControl
+            ufs={ufs}
+            microregions={microregions}
+            municipalities={municipalities}
+            selectedUf={selectedUf}
+            selectedMicroregion={selectedMicroregion}
+            selectedMunicipalityId={selectedMunicipalityId}
+            currentLayer={currentLayer}
+            onUfChange={handleUfChange}
+            onMicroregionChange={handleMicroregionChange}
+            onMunicipalityChange={handleMunicipalityChange}
+            onLayerChange={handleLayerChange}
+            onBack={handleBack}
+          />
 
-        <IndicatorSelector
-          indicators={indicators}
-          selectedIndicator={selectedIndicator}
-          onIndicatorChange={handleIndicatorChange}
-        />
+          <IndicatorSelector
+            indicators={indicators}
+            selectedIndicator={selectedIndicator}
+            onIndicatorChange={handleIndicatorChange}
+          />
 
-        <SidePanel
-          selectedFeature={selectedFeature}
-          indicators={indicators}
-          selectedIndicator={selectedIndicator}
-        />
+          <SidePanel
+            selectedFeature={selectedFeature}
+            indicators={indicators}
+            selectedIndicator={selectedIndicator}
+          />
 
-        <p className="status">{status}</p>
+          <p className="status">{status}</p>
+        </div>
+
+        <footer className="sidebar-footer" aria-label="Informacoes de contato e fontes">
+          <strong>Criado por Thiago Panchiniak</strong>
+          <a href="https://www.linkedin.com/in/thiago-panchiniak-65b63055/" target="_blank" rel="noreferrer">LinkedIn</a>
+          <a href="mailto:panchiniak@gmail.com">panchiniak@gmail.com</a>
+          <span>Fontes: IBGE, Censo 2022.</span>
+        </footer>
       </aside>
 
       <section className="main-content">

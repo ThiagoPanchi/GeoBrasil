@@ -21,11 +21,49 @@ body {
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 28px;
+  height: 100vh;
+  min-height: 0;
+  padding: 0;
   background: #f8fafc;
   border-right: 1px solid #cbd5e1;
+  overflow: hidden;
+}
+
+.sidebar-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+  padding: 28px;
   overflow-y: auto;
+}
+
+.sidebar-footer {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 4px;
+  padding: 16px 28px 18px;
+  color: #475569;
+  background: #ffffff;
+  border-top: 1px solid #dbe3ed;
+  box-shadow: 0 -12px 24px rgba(15, 23, 42, 0.06);
+  font-size: 0.76rem;
+}
+
+.sidebar-footer strong {
+  color: #0f172a;
+  font-size: 0.82rem;
+}
+
+.sidebar-footer a {
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.sidebar-footer a:hover {
+  text-decoration: underline;
 }
 
 .eyebrow {
@@ -96,7 +134,7 @@ select {
 .info-card,
 .dashboard-panel,
 .map-legend,
-.map-attribution-card {
+.map-report-panel {
   padding: 16px;
   background: #ffffff;
   border: 1px solid #dbe3ed;
@@ -184,32 +222,38 @@ dd {
   pointer-events: auto;
 }
 
-.map-attribution-card {
+.map-report-panel {
   position: absolute;
   left: 18px;
   bottom: 18px;
   z-index: 500;
-  display: grid;
-  gap: 4px;
-  width: min(280px, calc(100% - 36px));
-  color: #475569;
-  font-size: 0.76rem;
+  width: min(620px, calc(100% - 36px));
+  max-height: min(72vh, calc(100% - 36px));
+  overflow: hidden;
   pointer-events: auto;
 }
 
-.map-attribution-card strong {
-  color: #0f172a;
-  font-size: 0.82rem;
+.map-report-panel .municipality-popup-report {
+  max-height: calc(min(72vh, calc(100vh - 36px)) - 34px);
 }
 
-.map-attribution-card a {
-  color: #2563eb;
-  font-weight: 700;
-  text-decoration: none;
+.map-report-panel .popup-report-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, max-content);
 }
 
-.map-attribution-card a:hover {
-  text-decoration: underline;
+.map-report-panel .popup-report-row strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+  white-space: normal;
+}
+
+.map-report-panel .popup-pie-content {
+  grid-template-columns: 86px minmax(0, 1fr);
+}
+
+.map-report-panel .popup-pie-legend-row {
+  grid-template-columns: 10px minmax(0, 1fr) auto;
 }
 
 .map-tools {
@@ -861,8 +905,21 @@ tbody tr.active {
   }
 
   .sidebar {
+    height: auto;
+    min-height: 0;
     border-right: 0;
     border-bottom: 1px solid #cbd5e1;
+    overflow: visible;
+  }
+
+  .sidebar-content {
+    padding: 24px 24px 0;
+    overflow: visible;
+  }
+
+  .sidebar-footer {
+    margin-top: 18px;
+    padding: 14px 24px 16px;
   }
 
   .map-area {
@@ -908,13 +965,17 @@ tbody tr.active {
     max-height: 34vh;
   }
 
-  .map-attribution-card {
+  .map-report-panel {
     position: relative;
     left: auto;
     bottom: auto;
     width: auto;
+    max-height: none;
     margin: 12px;
-    font-size: 0.74rem;
+  }
+
+  .map-report-panel .municipality-popup-report {
+    max-height: calc(min(56vh, 520px) - 34px);
   }
 
   .map-tools {
